@@ -14,7 +14,16 @@ export async function POST(request: Request) {
   ];
 
   for (const name of cookiesToClear) {
-    response.cookies.delete(name);
+    // __Secure- prefixed cookies can only be deleted with a Secure attribute.
+    response.cookies.set({
+      name,
+      value: "",
+      path: "/",
+      expires: new Date(0),
+      secure: true,
+      httpOnly: true,
+      sameSite: "lax",
+    });
   }
 
   response.headers.set("Cache-Control", "no-store");
