@@ -1,23 +1,22 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { LogOut } from "lucide-react";
 
 export function LogoutButton() {
-  const router = useRouter();
   const [busy, setBusy] = useState(false);
 
   async function logout() {
     setBusy(true);
     try {
-      await fetch("/api/auth/sign-out", { method: "POST" }).catch(() => {});
+      // Clearing every session cookie locally is enough to sign out.
+      // No call to the external auth provider — that request can hang.
       await fetch("/api/auth/admin-logout", { method: "POST" });
-      router.push("/");
-      router.refresh();
     } catch {
-      setBusy(false);
+      // Still reload so the UI reflects the cleared state.
     }
+    // Full reload guarantees the server-rendered header updates.
+    window.location.replace("/");
   }
 
   return (
