@@ -12,8 +12,11 @@ export default async function NewAppPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Publish an app</h1>
+      <div className="rise-in">
+        <span className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-500">
+          Share your work
+        </span>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">Publish an app</h1>
         <p className="mt-1 text-sm text-slate-500">
           Add the details and the install file. Your app will appear in the catalog immediately.
         </p>

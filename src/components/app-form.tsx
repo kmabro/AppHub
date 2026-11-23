@@ -3,11 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ImagePlus, Plus, UploadCloud, X } from "lucide-react";
+import { ImagePlus, Loader2, Plus, UploadCloud, X } from "lucide-react";
 import { CATEGORIES, type AppRecord, type InstallMethod, type Platform } from "@/lib/types";
 
 const inputClass =
-  "w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100";
+  "field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm placeholder:text-slate-400";
 const labelClass = "mb-1.5 block text-sm font-medium text-slate-700";
 
 type Initial = Pick<
@@ -157,9 +157,19 @@ export function AppForm({ initial }: { initial?: Initial }) {
 
   return (
     <form onSubmit={submit} className="space-y-6">
-      <section className="rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 className="text-lg font-semibold text-slate-900">App details</h2>
-        <p className="mt-1 text-sm text-slate-500">Tell everyone what you built.</p>
+      <section
+        className="rise-in rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm"
+        style={{ "--delay": "60ms" } as React.CSSProperties}
+      >
+        <div className="flex items-center gap-3">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-100 to-violet-100 text-xs font-bold text-indigo-600">
+            01
+          </span>
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight text-slate-900">App details</h2>
+            <p className="text-sm text-slate-500">Tell everyone what you built.</p>
+          </div>
+        </div>
 
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
@@ -252,11 +262,21 @@ export function AppForm({ initial }: { initial?: Initial }) {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 className="text-lg font-semibold text-slate-900">Install file</h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Android users download an APK. For iOS, a TestFlight or App Store link works best.
-        </p>
+      <section
+        className="rise-in rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm"
+        style={{ "--delay": "140ms" } as React.CSSProperties}
+      >
+        <div className="flex items-center gap-3">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-100 to-violet-100 text-xs font-bold text-indigo-600">
+            02
+          </span>
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight text-slate-900">Install file</h2>
+            <p className="text-sm text-slate-500">
+              Android users download an APK. For iOS, a TestFlight or App Store link works best.
+            </p>
+          </div>
+        </div>
 
         <div className="mt-5 flex gap-2 rounded-lg bg-slate-100 p-1">
           {(["file", "link"] as InstallMethod[]).map((method) => (
@@ -264,7 +284,7 @@ export function AppForm({ initial }: { initial?: Initial }) {
               key={method}
               type="button"
               onClick={() => setInstallMethod(method)}
-              className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
+              className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-all duration-300 ${
                 installMethod === method
                   ? "bg-white text-slate-900 shadow-sm"
                   : "text-slate-500 hover:text-slate-700"
@@ -279,9 +299,12 @@ export function AppForm({ initial }: { initial?: Initial }) {
           <div className="mt-4">
             <label
               htmlFor="app-file"
-              className="flex cursor-pointer flex-col items-center rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-8 text-center transition hover:border-indigo-300 hover:bg-indigo-50/40"
+              className="group flex cursor-pointer flex-col items-center rounded-xl border border-dashed border-slate-300 bg-slate-50/70 px-4 py-8 text-center transition-all duration-300 hover:border-indigo-400 hover:bg-indigo-50/50 hover:shadow-inner"
             >
-              <UploadCloud size={24} className="text-indigo-500" />
+              <UploadCloud
+                size={24}
+                className="text-indigo-500 transition-transform duration-300 group-hover:-translate-y-1"
+              />
               <span className="mt-2 text-sm font-medium text-slate-700">
                 {appFile ? appFile.name : existingFileUrl ? "Replace current file" : "Choose a file"}
               </span>
@@ -322,9 +345,19 @@ export function AppForm({ initial }: { initial?: Initial }) {
         )}
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 className="text-lg font-semibold text-slate-900">Images</h2>
-        <p className="mt-1 text-sm text-slate-500">Optional, but they help your app stand out.</p>
+      <section
+        className="rise-in rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm"
+        style={{ "--delay": "220ms" } as React.CSSProperties}
+      >
+        <div className="flex items-center gap-3">
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-100 to-violet-100 text-xs font-bold text-indigo-600">
+            03
+          </span>
+          <div>
+            <h2 className="text-lg font-semibold tracking-tight text-slate-900">Images</h2>
+            <p className="text-sm text-slate-500">Optional, but they help your app stand out.</p>
+          </div>
+        </div>
 
         <div className="mt-5 grid gap-4 sm:grid-cols-2">
           <div>
@@ -391,23 +424,32 @@ export function AppForm({ initial }: { initial?: Initial }) {
       </section>
 
       {error && (
-        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">
+        <p
+          role="alert"
+          className="fade-in rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
           {error}
         </p>
       )}
-      {status && <p className="text-sm text-indigo-600">{status}</p>}
+      {status && (
+        <p className="fade-in flex items-center gap-2 text-sm text-indigo-600">
+          <Loader2 size={14} className="spin-slow" />
+          {status}
+        </p>
+      )}
 
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="submit"
           disabled={busy}
-          className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-60"
+          className="btn-primary group inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white"
         >
+          {busy && <Loader2 size={16} className="spin-slow" />}
           {busy ? "Working…" : editing ? "Save changes" : "Publish app"}
         </button>
         <Link
           href={editing ? `/apps/${initial!.id}` : "/"}
-          className="rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+          className="btn-soft rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-600"
         >
           Cancel
         </Link>

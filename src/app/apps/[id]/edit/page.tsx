@@ -23,8 +23,11 @@ export default async function EditAppPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">Edit app</h1>
+      <div className="rise-in">
+        <span className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-500">
+          Update your app
+        </span>
+        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">Edit app</h1>
         <p className="mt-1 text-sm text-slate-500">Update the details or replace the install file.</p>
       </div>
       <AppForm initial={app} />

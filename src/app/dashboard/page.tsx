@@ -30,10 +30,10 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      <div className="rise-in flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm text-slate-500">Signed in as {session.email}</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">
             Hello, {session.name.split(" ")[0]}
           </h1>
           <p className="mt-1 text-sm text-slate-500">
@@ -44,9 +44,9 @@ export default async function DashboardPage() {
         <div className="flex items-center gap-3">
           <Link
             href="/apps/new"
-            className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700"
+            className="btn-primary group inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white"
           >
-            <Plus size={16} /> Publish app
+            <Plus size={16} className="transition-transform duration-300 group-hover:rotate-90" /> Publish app
           </Link>
           <span className="sm:hidden">
             <LogoutButton />
@@ -55,7 +55,10 @@ export default async function DashboardPage() {
       </div>
 
       {apps.length ? (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+        <div
+          className="rise-in overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm"
+          style={{ "--delay": "100ms" } as React.CSSProperties}
+        >
           <div className="hidden grid-cols-[1fr_120px_100px_180px] gap-4 border-b border-slate-100 px-5 py-3 text-xs font-medium uppercase tracking-wide text-slate-400 sm:grid">
             <span>App</span>
             <span>Platform</span>
@@ -65,7 +68,7 @@ export default async function DashboardPage() {
           {apps.map((app) => (
             <div
               key={app.id}
-              className="grid gap-3 border-b border-slate-100 px-5 py-4 last:border-0 sm:grid-cols-[1fr_120px_100px_180px] sm:items-center sm:gap-4"
+              className="grid gap-3 border-b border-slate-100 px-5 py-4 transition-colors duration-300 last:border-0 hover:bg-slate-50/70 sm:grid-cols-[1fr_120px_100px_180px] sm:items-center sm:gap-4"
             >
               <Link href={`/apps/${app.id}`} className="flex min-w-0 items-center gap-3">
                 {app.icon_url ? (
@@ -91,7 +94,7 @@ export default async function DashboardPage() {
               <div className="flex gap-2 sm:justify-end">
                 <Link
                   href={`/apps/${app.id}/edit`}
-                  className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-50"
+                  className="btn-soft rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600"
                 >
                   Edit
                 </Link>
@@ -101,15 +104,15 @@ export default async function DashboardPage() {
           ))}
         </div>
       ) : (
-        <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
-            <Plus size={22} />
+        <div className="rise-in rounded-2xl border border-dashed border-slate-300 bg-white/80 px-6 py-16 text-center backdrop-blur">
+          <div className="icon-bubble mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-100 text-indigo-500">
+            <Plus size={24} />
           </div>
           <h2 className="mt-4 font-semibold text-slate-900">No apps yet</h2>
           <p className="mt-1 text-sm text-slate-500">Publish your first app to share it with the class.</p>
           <Link
             href="/apps/new"
-            className="mt-5 inline-flex rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700"
+            className="btn-primary mt-6 inline-flex rounded-lg px-4 py-2.5 text-sm font-medium text-white"
           >
             Publish an app
           </Link>

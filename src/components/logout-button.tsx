@@ -19,7 +19,7 @@ export function LogoutButton() {
       type="button"
       onClick={logout}
       disabled={busy}
-      className="text-sm text-slate-500 transition hover:text-slate-900 disabled:opacity-50"
+      className="nav-link text-sm text-slate-500 hover:text-slate-900 disabled:opacity-50"
     >
       Sign out
     </button>

@@ -31,21 +31,29 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
     <div className="space-y-6">
       <Link
         href="/"
-        className="inline-flex items-center gap-1.5 text-sm text-slate-500 transition hover:text-slate-900"
+        className="group rise-in inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900"
       >
-        <ArrowLeft size={15} /> Back to all apps
+        <ArrowLeft
+          size={15}
+          className="transition-transform duration-300 group-hover:-translate-x-1"
+        />
+        Back to all apps
       </Link>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
+      <section
+        className="rise-in relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-[0_20px_60px_-45px_rgba(79,70,229,0.4)] sm:p-8"
+        style={{ "--delay": "80ms" } as React.CSSProperties}
+      >
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-300 to-transparent" />
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
           {app.icon_url ? (
             <img
               src={app.icon_url}
               alt=""
-              className="h-20 w-20 shrink-0 rounded-2xl object-cover"
+              className="h-20 w-20 shrink-0 rounded-2xl object-cover shadow-md transition-transform duration-500 hover:scale-105 hover:rotate-3"
             />
           ) : (
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-xl font-semibold text-indigo-600">
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-100 to-violet-100 text-xl font-semibold text-indigo-600 shadow-sm">
               {initials(app.name)}
             </div>
           )}
@@ -53,19 +61,19 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <PlatformBadge platform={app.platform} />
-              <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
+              <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 transition-colors duration-300 hover:bg-slate-200">
                 {app.category}
               </span>
               <span className="text-xs text-slate-400">v{app.version}</span>
             </div>
-            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900">
+            <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
               {app.name}
             </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              by {app.owner_name || "a student developer"}
+            <p className="mt-1.5 text-sm text-slate-500">
+              by <span className="font-medium text-slate-700">{app.owner_name || "a student developer"}</span>
             </p>
 
-            <div className="mt-6">
+            <div className="mt-7">
               <InstallButton
                 id={app.id}
                 platform={app.platform}
@@ -78,9 +86,13 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
           {canEdit && (
             <Link
               href={`/apps/${app.id}/edit`}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 transition hover:bg-slate-50"
+              className="btn-soft group inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600"
             >
-              <Pencil size={14} /> Edit
+              <Pencil
+                size={14}
+                className="transition-transform duration-300 group-hover:rotate-12"
+              />
+              Edit
             </Link>
           )}
         </div>
@@ -88,23 +100,30 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
 
       <div className="grid gap-6 lg:grid-cols-[1fr_280px]">
         <div className="space-y-6">
-          <section className="rounded-2xl border border-slate-200 bg-white p-6">
-            <h2 className="text-lg font-semibold text-slate-900">About this app</h2>
-            <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-slate-600">
+          <section
+            className="rise-in rounded-2xl border border-slate-200/80 bg-white p-6"
+            style={{ "--delay": "160ms" } as React.CSSProperties}
+          >
+            <h2 className="text-lg font-semibold tracking-tight text-slate-900">About this app</h2>
+            <div className="mt-3 h-px w-10 rounded-full bg-gradient-to-r from-indigo-500 to-violet-500" />
+            <p className="mt-4 whitespace-pre-wrap text-sm leading-7 text-slate-600">
               {app.description || "The developer hasn't added a description yet."}
             </p>
           </section>
 
           {app.screenshots && app.screenshots.length > 0 && (
-            <section className="rounded-2xl border border-slate-200 bg-white p-6">
-              <h2 className="text-lg font-semibold text-slate-900">Screenshots</h2>
+            <section
+              className="rise-in rounded-2xl border border-slate-200/80 bg-white p-6"
+              style={{ "--delay": "220ms" } as React.CSSProperties}
+            >
+              <h2 className="text-lg font-semibold tracking-tight text-slate-900">Screenshots</h2>
               <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {app.screenshots.map((url, index) => (
                   <img
                     key={url + index}
                     src={url}
                     alt={`${app.name} screenshot ${index + 1}`}
-                    className="aspect-[9/16] w-full rounded-xl border border-slate-100 object-cover"
+                    className="card-lift aspect-[9/16] w-full rounded-xl border border-slate-100 object-cover"
                   />
                 ))}
               </div>
@@ -112,32 +131,35 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
           )}
         </div>
 
-        <aside className="h-fit rounded-2xl border border-slate-200 bg-white p-6">
-          <h2 className="text-sm font-semibold text-slate-900">Details</h2>
-          <dl className="mt-4 space-y-4 text-sm">
+        <aside
+          className="rise-in h-fit rounded-2xl border border-slate-200/80 bg-white p-6"
+          style={{ "--delay": "280ms" } as React.CSSProperties}
+        >
+          <h2 className="text-sm font-semibold tracking-tight text-slate-900">Details</h2>
+          <dl className="mt-5 space-y-5 text-sm">
             <div className="flex items-start gap-3">
-              <Package size={16} className="mt-0.5 shrink-0 text-slate-400" />
+              <Package size={16} className="mt-0.5 shrink-0 text-indigo-400" />
               <div className="min-w-0">
                 <dt className="text-xs text-slate-400">Package</dt>
                 <dd className="truncate text-slate-700">{app.package_name}</dd>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <Download size={16} className="mt-0.5 shrink-0 text-slate-400" />
+              <Download size={16} className="mt-0.5 shrink-0 text-indigo-400" />
               <div>
                 <dt className="text-xs text-slate-400">Downloads</dt>
-                <dd className="font-medium text-slate-700">{app.downloads}</dd>
+                <dd className="font-semibold text-slate-700">{app.downloads}</dd>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <CalendarDays size={16} className="mt-0.5 shrink-0 text-slate-400" />
+              <CalendarDays size={16} className="mt-0.5 shrink-0 text-indigo-400" />
               <div>
                 <dt className="text-xs text-slate-400">Published</dt>
                 <dd className="text-slate-700">{formatDate(app.created_at)}</dd>
               </div>
             </div>
             <div className="flex items-start gap-3">
-              <UserRound size={16} className="mt-0.5 shrink-0 text-slate-400" />
+              <UserRound size={16} className="mt-0.5 shrink-0 text-indigo-400" />
               <div>
                 <dt className="text-xs text-slate-400">Developer</dt>
                 <dd className="text-slate-700">{app.owner_name}</dd>
@@ -145,7 +167,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
             </div>
             {app.file_size && Number(app.file_size) > 0 && (
               <div className="flex items-start gap-3">
-                <Download size={16} className="mt-0.5 shrink-0 text-slate-400" />
+                <Download size={16} className="mt-0.5 shrink-0 text-indigo-400" />
                 <div>
                   <dt className="text-xs text-slate-400">File size</dt>
                   <dd className="text-slate-700">{formatBytes(Number(app.file_size))}</dd>

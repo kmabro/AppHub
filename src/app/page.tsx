@@ -72,32 +72,45 @@ export default async function Home({
 
   return (
     <div className="space-y-10">
-      <section className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white px-6 py-12 sm:px-12 sm:py-16">
-        <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-indigo-100 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-32 left-1/3 h-64 w-64 rounded-full bg-sky-100 blur-3xl" />
+      <section className="rise-in relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white/85 px-6 py-14 shadow-[0_20px_60px_-40px_rgba(79,70,229,0.35)] backdrop-blur sm:px-12 sm:py-20">
+        <div className="pointer-events-none absolute inset-0 opacity-[0.45] [background-image:radial-gradient(#c7d2fe_1px,transparent_1px)] [background-size:22px_22px] [mask-image:linear-gradient(to_bottom,black,transparent_75%)]" />
+        <div className="float-soft pointer-events-none absolute -right-20 -top-24 h-80 w-80 rounded-full bg-gradient-to-br from-indigo-200/70 to-violet-200/50 blur-3xl" />
+        <div className="float-slower pointer-events-none absolute -bottom-36 left-1/4 h-72 w-72 rounded-full bg-gradient-to-br from-sky-200/60 to-indigo-200/50 blur-3xl" />
         <div className="relative max-w-2xl">
-          <span className="inline-flex rounded-full bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
+          <span className="fade-in inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white/80 px-3.5 py-1.5 text-xs font-medium text-indigo-700 shadow-sm backdrop-blur" style={{ "--delay": "120ms" } as React.CSSProperties}>
+            <span className="breathe h-1.5 w-1.5 rounded-full bg-indigo-500" />
             Built by students, shared with everyone
           </span>
-          <h1 className="mt-5 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl">
-            Discover apps made by your classmates.
+          <h1
+            className="rise-in mt-6 text-4xl font-semibold leading-[1.1] tracking-tight sm:text-6xl"
+            style={{ "--delay": "180ms" } as React.CSSProperties}
+          >
+            Discover apps made by <span className="gradient-text">your classmates.</span>
           </h1>
-          <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-600">
+          <p
+            className="rise-in mt-5 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg"
+            style={{ "--delay": "260ms" } as React.CSSProperties}
+          >
             AppHub is the simple place to publish a mobile app and share it with the whole class.
             Upload once — everyone can find it and install it from here.
           </p>
-          <div className="mt-7 flex flex-wrap gap-3">
+          <div
+            className="rise-in mt-8 flex flex-wrap gap-3"
+            style={{ "--delay": "340ms" } as React.CSSProperties}
+          >
             <Link
               href="/apps/new"
-              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700"
+              className="btn-primary group inline-flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-white"
             >
-              Publish your app <ArrowRight size={16} />
+              Publish your app
+              <ArrowRight size={16} className="arrow-slide" />
             </Link>
             <Link
               href="#browse"
-              className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="btn-soft group inline-flex items-center rounded-xl border border-slate-200 bg-white px-5 py-3 text-sm font-medium text-slate-700"
             >
               Browse apps
+              <ArrowRight size={15} className="ml-2 rotate-90 arrow-slide" />
             </Link>
           </div>
         </div>
@@ -108,54 +121,66 @@ export default async function Home({
           { icon: Layers3, label: "Apps published", value: s?.apps ?? "0" },
           { icon: Download, label: "Total downloads", value: s?.downloads ?? "0" },
           { icon: Users, label: "Student developers", value: s?.developers ?? "0" },
-        ].map(({ icon: Icon, label, value }) => (
+        ].map(({ icon: Icon, label, value }, index) => (
           <div
             key={label}
-            className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-4"
+            style={{ "--delay": `${400 + index * 80}ms` } as React.CSSProperties}
+            className="card-lift rise-in flex items-center gap-4 rounded-2xl border border-slate-200/80 bg-white px-5 py-4"
           >
-            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
-              <Icon size={18} />
+            <span className="icon-bubble flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-50 to-violet-100 text-indigo-600">
+              <Icon size={19} />
             </span>
             <div>
-              <p className="text-2xl font-semibold leading-none text-slate-900">{value}</p>
-              <p className="mt-1 text-xs text-slate-500">{label}</p>
+              <p className="text-2xl font-semibold leading-none tracking-tight text-slate-900">
+                {value}
+              </p>
+              <p className="mt-1.5 text-xs text-slate-500">{label}</p>
             </div>
           </div>
         ))}
       </section>
 
-      <section id="browse" className="scroll-mt-24 space-y-5">
-        <div>
-          <h2 className="text-xl font-semibold tracking-tight text-slate-900">All apps</h2>
+      <section id="browse" className="scroll-mt-24 space-y-6">
+        <div className="rise-in" style={{ "--delay": "480ms" } as React.CSSProperties}>
+          <span className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-500">
+            The catalog
+          </span>
+          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">All apps</h2>
           <p className="mt-1 text-sm text-slate-500">
             {apps.length} {apps.length === 1 ? "app" : "apps"} available to install
           </p>
         </div>
 
-        <Suspense fallback={<div className="h-16 animate-pulse rounded-2xl bg-white" />}>
-          <SearchFilters />
+        <Suspense
+          fallback={
+            <div className="shimmer relative h-16 overflow-hidden rounded-2xl border border-slate-200 bg-white" />
+          }
+        >
+          <div className="rise-in" style={{ "--delay": "540ms" } as React.CSSProperties}>
+            <SearchFilters />
+          </div>
         </Suspense>
 
         {apps.length ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {apps.map((app) => (
-              <AppCard key={app.id} app={app} />
+            {apps.map((app, index) => (
+              <AppCard key={app.id} app={app} index={index} />
             ))}
           </div>
         ) : (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
-              <Layers3 size={22} />
+          <div className="rise-in rounded-2xl border border-dashed border-slate-300 bg-white/80 px-6 py-16 text-center backdrop-blur">
+            <div className="icon-bubble mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-50 to-violet-100 text-indigo-500">
+              <Layers3 size={24} />
             </div>
-            <h3 className="mt-4 font-semibold text-slate-900">No apps found</h3>
-            <p className="mx-auto mt-1 max-w-sm text-sm text-slate-500">
+            <h3 className="mt-5 font-semibold text-slate-900">No apps found</h3>
+            <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-slate-500">
               {q || category || platform
                 ? "Try a different search or clear the filters."
                 : "Be the first to publish an app for your class."}
             </p>
             <Link
               href="/apps/new"
-              className="mt-5 inline-flex rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-700"
+              className="btn-primary mt-6 inline-flex rounded-lg px-4 py-2.5 text-sm font-medium text-white"
             >
               Publish an app
             </Link>

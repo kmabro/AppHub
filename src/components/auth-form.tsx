@@ -3,11 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ArrowRight, LayoutGrid, Loader2, ShieldCheck } from "lucide-react";
 
 type Props = { mode: "login" | "register" };
-
-const inputClass =
-  "w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2.5 text-sm outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100";
 
 export function AuthForm({ mode }: Props) {
   const router = useRouter();
@@ -43,18 +41,27 @@ export function AuthForm({ mode }: Props) {
   }
 
   return (
-    <div className="mx-auto max-w-md">
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8">
+    <div className="mx-auto max-w-md py-4 sm:py-8">
+      <div className="rise-in mb-6 flex justify-center">
+        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30">
+          <LayoutGrid size={22} />
+        </span>
+      </div>
+
+      <div
+        className="rise-in overflow-hidden rounded-3xl border border-slate-200/80 bg-white p-6 shadow-[0_25px_70px_-45px_rgba(79,70,229,0.45)] sm:p-8"
+        style={{ "--delay": "80ms" } as React.CSSProperties}
+      >
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
           {isRegister ? "Create your account" : "Welcome back"}
         </h1>
-        <p className="mt-1.5 text-sm text-slate-500">
+        <p className="mt-2 text-sm leading-relaxed text-slate-500">
           {isRegister
             ? "Join AppHub to publish apps and install the ones your classmates shared."
             : "Sign in to manage the apps you have published."}
         </p>
 
-        <form onSubmit={submit} className="mt-6 space-y-4">
+        <form onSubmit={submit} className="mt-7 space-y-4">
           {isRegister && (
             <div>
               <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-slate-700">
@@ -67,7 +74,7 @@ export function AuthForm({ mode }: Props) {
                 placeholder="e.g. Ayesha Khan"
                 autoComplete="name"
                 required
-                className={inputClass}
+                className="field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm placeholder:text-slate-400"
               />
             </div>
           )}
@@ -83,7 +90,7 @@ export function AuthForm({ mode }: Props) {
               placeholder="you@school.edu"
               autoComplete="email"
               required
-              className={inputClass}
+              className="field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm placeholder:text-slate-400"
             />
           </div>
           <div>
@@ -99,12 +106,15 @@ export function AuthForm({ mode }: Props) {
               autoComplete={isRegister ? "new-password" : "current-password"}
               minLength={isRegister ? 8 : 1}
               required
-              className={inputClass}
+              className="field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm placeholder:text-slate-400"
             />
           </div>
 
           {error && (
-            <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" role="alert">
+            <p
+              role="alert"
+              className="fade-in rounded-xl border border-red-100 bg-red-50 px-3.5 py-2.5 text-sm text-red-700"
+            >
               {error}
             </p>
           )}
@@ -112,22 +122,46 @@ export function AuthForm({ mode }: Props) {
           <button
             type="submit"
             disabled={busy}
-            className="w-full rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-60"
+            className="btn-primary group flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white"
           >
-            {busy ? "Please wait…" : isRegister ? "Create account" : "Sign in"}
+            {busy ? (
+              <>
+                <Loader2 size={16} className="spin-slow" /> Please wait…
+              </>
+            ) : (
+              <>
+                {isRegister ? "Create account" : "Sign in"}
+                <ArrowRight size={16} className="arrow-slide" />
+              </>
+            )}
           </button>
         </form>
+
+        <div className="mt-6 flex items-center gap-3">
+          <span className="h-px flex-1 bg-slate-100" />
+          <span className="text-xs text-slate-400">or</span>
+          <span className="h-px flex-1 bg-slate-100" />
+        </div>
 
         <p className="mt-5 text-center text-sm text-slate-500">
           {isRegister ? "Already have an account? " : "New to AppHub? "}
           <Link
             href={isRegister ? "/login" : "/register"}
-            className="font-medium text-indigo-600 hover:text-indigo-700"
+            className="group inline-flex items-center gap-1 font-semibold text-indigo-600 transition-colors hover:text-indigo-700"
           >
             {isRegister ? "Sign in" : "Create one"}
+            <ArrowRight size={13} className="arrow-slide" />
           </Link>
         </p>
       </div>
+
+      <p
+        className="fade-in mt-5 flex items-center justify-center gap-2 text-xs text-slate-400"
+        style={{ "--delay": "200ms" } as React.CSSProperties}
+      >
+        <ShieldCheck size={14} />
+        Your password is stored securely. Only you can manage your apps.
+      </p>
     </div>
   );
 }

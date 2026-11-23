@@ -25,7 +25,7 @@ export function DeleteButton({ id, name }: { id: string; name: string }) {
       type="button"
       onClick={remove}
       disabled={busy}
-      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
+      className="btn-soft group inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
     >
       <Trash2 size={14} />
       Delete
