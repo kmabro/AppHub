@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -19,6 +18,7 @@ import { PlatformBadge } from "@/components/platform-badge";
 import { InstallButton } from "@/components/install-button";
 import { DeleteButton } from "@/components/delete-button";
 import { ReviewsSection } from "@/components/reviews-section";
+import { ImageLightbox } from "@/components/image-lightbox";
 
 export const dynamic = "force-dynamic";
 
@@ -79,9 +79,9 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-300 to-transparent" />
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start">
           {app.icon_url ? (
-            <img
+            <ImageLightbox
               src={app.icon_url}
-              alt=""
+              alt={app.name}
               className="h-20 w-20 shrink-0 rounded-2xl object-cover shadow-md transition-transform duration-500 hover:scale-105 hover:rotate-3"
             />
           ) : (
@@ -233,7 +233,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
               <h2 className="text-lg font-semibold tracking-tight text-slate-900">Screenshots</h2>
               <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
                 {app.screenshots.map((url, index) => (
-                  <img
+                  <ImageLightbox
                     key={url + index}
                     src={url}
                     alt={`${app.name} screenshot ${index + 1}`}

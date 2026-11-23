@@ -1,7 +1,7 @@
 "use client";
 
 import Cropper, { type Area } from "react-easy-crop";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Check, Maximize, X, ZoomIn, ZoomOut } from "lucide-react";
 import { getCroppedFile, type CropArea } from "@/lib/crop";
 
@@ -18,13 +18,33 @@ export function ImageCropper({ src, fileName, mime, aspect, onDone, onCancel }: 
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [area, setArea] = useState<CropArea | null>(null);
-  const [busy, setBusy] = useState(false);
+  const [fullArea, setFullArea] = useState<CropArea | null>(null);
   const [fullImage, setFullImage] = useState(false);
+  const fullRef = useRef(false);
+  const [busy, setBusy] = useState(false);
 
   const onCropComplete = useCallback((_croppedArea: Area, pixels: Area) => {
-    setFullImage(false);
+    // react-easy-crop recalculates after we set zoom/position for "full image".
+    // Ignore that recalculation so it can't overwrite the full-image area.
+    if (fullRef.current) return;
     setArea(pixels);
   }, []);
+
+  function handleCropChange(next: { x: number; y: number }) {
+    if (fullRef.current) {
+      fullRef.current = false;
+      setFullImage(false);
+    }
+    setCrop(next);
+  }
+
+  function handleZoomChange(next: number) {
+    if (fullRef.current) {
+      fullRef.current = false;
+      setFullImage(false);
+    }
+    setZoom(next);
+  }
 
   async function selectFullImage() {
     const image = new Image();
@@ -37,22 +57,26 @@ export function ImageCropper({ src, fileName, mime, aspect, onDone, onCancel }: 
         image.onerror = () => reject(new Error("Could not read image"));
       });
     }
-    setArea({
+    const complete: CropArea = {
       x: 0,
       y: 0,
       width: image.naturalWidth,
       height: image.naturalHeight,
-    });
+    };
+    setFullArea(complete);
+    setArea(complete);
+    fullRef.current = true;
+    setFullImage(true);
     setZoom(1);
     setCrop({ x: 0, y: 0 });
-    setFullImage(true);
   }
 
   async function apply() {
-    if (!area) return;
+    const finalArea = fullRef.current && fullArea ? fullArea : area;
+    if (!finalArea) return;
     setBusy(true);
     try {
-      const file = await getCroppedFile(src, area, fileName, mime);
+      const file = await getCroppedFile(src, finalArea, fileName, mime);
       onDone(file);
     } catch {
       setBusy(false);
@@ -65,7 +89,9 @@ export function ImageCropper({ src, fileName, mime, aspect, onDone, onCancel }: 
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-base font-semibold text-slate-900">Choose the visible area</h3>
-            <p className="mt-0.5 text-xs text-slate-500">Drag to move, scroll or use the slider to zoom.</p>
+            <p className="mt-0.5 text-xs text-slate-500">
+              Drag to move, scroll or use the slider to zoom.
+            </p>
           </div>
           <button
             type="button"
@@ -83,8 +109,8 @@ export function ImageCropper({ src, fileName, mime, aspect, onDone, onCancel }: 
             crop={crop}
             zoom={zoom}
             aspect={aspect}
-            onCropChange={setCrop}
-            onZoomChange={setZoom}
+            onCropChange={handleCropChange}
+            onZoomChange={handleZoomChange}
             onCropComplete={onCropComplete}
           />
         </div>
@@ -97,7 +123,7 @@ export function ImageCropper({ src, fileName, mime, aspect, onDone, onCancel }: 
             max={3}
             step={0.05}
             value={zoom}
-            onChange={(event) => setZoom(Number(event.target.value))}
+            onChange={(event) => handleZoomChange(Number(event.target.value))}
             aria-label="Zoom"
             className="h-1.5 w-full cursor-pointer accent-indigo-600"
           />
