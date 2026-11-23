@@ -125,7 +125,6 @@ node scripts/e2e-test.mjs     # smoke test against the running server
 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_BUCKET` | Storage credentials and bucket |
 | `NEON_AUTH_BASE_URL` | Neon Auth base URL from Console → Better Auth |
 | `NEON_AUTH_COOKIE_SECRET` | Random secret (base64, 32+ bytes) for auth session cookies |
-| `RESEND_API_KEY`, `EMAIL_FROM` | Optional legacy email settings (Neon Auth now handles student email) |
 | `NEXT_PUBLIC_SITE_URL` | Public URL used in QR codes, emails, robots, and sitemap |
 
 Set the bucket to `public_read` and allow `GET`, `HEAD`, `PUT` with any headers:
