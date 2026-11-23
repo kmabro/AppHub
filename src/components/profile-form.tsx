@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ImagePlus, Loader2, X } from "lucide-react";
-import { ImageCropper } from "./image-cropper";
 
 const inputClass =
   "field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-base sm:text-sm";
@@ -21,7 +20,6 @@ export function ProfileForm({ name, username, bio, avatarUrl }: Props) {
   const [handle, setHandle] = useState(username);
   const [about, setAbout] = useState(bio);
   const [avatar, setAvatar] = useState<string | null>(avatarUrl);
-  const [cropTarget, setCropTarget] = useState<{ file: File; url: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
@@ -52,12 +50,17 @@ export function ProfileForm({ name, username, bio, avatarUrl }: Props) {
     }
   }
 
-  async function applyCrop(file: File) {
+  async function uploadAvatar(file: File) {
     try {
       const info = await fetch("/api/upload-url", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "avatar", fileName: file.name, size: file.size, contentType: file.type }),
+        body: JSON.stringify({
+          kind: "avatar",
+          fileName: file.name,
+          size: file.size,
+          contentType: file.type,
+        }),
       });
       const data = await info.json();
       if (!info.ok) throw new Error(data.error || "Could not prepare upload");
@@ -68,8 +71,6 @@ export function ProfileForm({ name, username, bio, avatarUrl }: Props) {
       });
       if (!put.ok) throw new Error("Upload failed");
       setAvatar(data.url);
-      if (cropTarget) URL.revokeObjectURL(cropTarget.url);
-      setCropTarget(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
     }
@@ -102,7 +103,7 @@ export function ProfileForm({ name, username, bio, avatarUrl }: Props) {
                 className="hidden"
                 onChange={(event) => {
                   const file = event.target.files?.[0];
-                  if (file) setCropTarget({ file, url: URL.createObjectURL(file) });
+                  if (file) void uploadAvatar(file);
                   event.target.value = "";
                 }}
               />
@@ -163,19 +164,6 @@ export function ProfileForm({ name, username, bio, avatarUrl }: Props) {
         Save profile
       </button>
 
-      {cropTarget && (
-        <ImageCropper
-          src={cropTarget.url}
-          fileName={cropTarget.file.name}
-          mime={cropTarget.file.type || "image/jpeg"}
-          aspect={1}
-          onDone={applyCrop}
-          onCancel={() => {
-            URL.revokeObjectURL(cropTarget.url);
-            setCropTarget(null);
-          }}
-        />
-      )}
     </div>
   );
 }

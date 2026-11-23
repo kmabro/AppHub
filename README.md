@@ -13,7 +13,7 @@ A clean, production-ready app marketplace for a class. Students verify their ema
 - **Forgot password** with a one-hour reset link; resend verification if needed
 - Publish apps instantly — name, category, platform, description, version, release notes
 - Upload an **APK/IPA** or an install link (Google Drive, TestFlight, App Store…)
-- Add an **icon** and **screenshots** with a built-in **crop tool** for choosing the visible area
+- Add an **icon** and **screenshots** — full images are uploaded as-is, with no cropping
 - Live **circular upload progress** with a percentage
 - Edit apps, replace files, remove images, and delete apps
 - **Version management**: a new upload creates a **pending release**; the published version stays live until an admin approves it
@@ -58,7 +58,7 @@ The admin panel is completely separate from student accounts. Admins can view al
 | Styling | Tailwind CSS 4, custom design tokens and motion utilities |
 | Database | Neon Postgres (`pg`) |
 | Files | Neon Object Storage (S3-compatible) with AWS SDK presigned URLs |
-| Auth | **Neon Auth (Managed Better Auth)** for students; separate admin session (`jose`, `bcryptjs`); `react-easy-crop` for cropping |
+| Auth | **Neon Auth (Managed Better Auth)** for students; separate admin session (`jose`, `bcryptjs`) |
 | Email | Resend REST API |
 | Hosting | Vercel (recommended) |
 
@@ -90,8 +90,8 @@ src/app/
   globals.css                   design system, animations, utilities
   layout.tsx / template.tsx / loading.tsx / error.tsx
   robots.ts / sitemap.ts
-src/components/                 header, footer, cards, forms, cropper, QR, progress, reviews, admin actions
-src/lib/                        db, auth, auth-tokens, email, storage, crop, validation, formatting, types
+src/components/                 header, footer, cards, forms, QR, lightbox, progress, reviews, admin actions
+src/lib/                        db, auth, neon-auth, storage, validation, formatting, types
 ```
 
 ---

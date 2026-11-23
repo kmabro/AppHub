@@ -6,7 +6,6 @@ import { useState } from "react";
 import { ImagePlus, Loader2, Plus, UploadCloud, X } from "lucide-react";
 import { CATEGORIES, type AppRecord, type InstallMethod, type Platform } from "@/lib/types";
 import { UploadProgress } from "./upload-progress";
-import { ImageCropper } from "./image-cropper";
 
 const inputClass =
   "field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-base sm:text-sm";
@@ -91,48 +90,10 @@ export function AppForm({ initial }: { initial?: Initial }) {
   const [progress, setProgress] = useState<Record<string, number>>({});
   const [phase, setPhase] = useState("");
 
-  const [cropTarget, setCropTarget] = useState<{
-    file: File;
-    url: string;
-    kind: "icon" | "screenshot";
-  } | null>(null);
-  const [shotQueue, setShotQueue] = useState<File[]>([]);
   const [iconFile, setIconFile] = useState<File | null>(null);
   const [shotFiles, setShotFiles] = useState<File[]>([]);
   const [newIconUrl, setNewIconUrl] = useState<string | null>(null);
   const [newShotUrls, setNewShotUrls] = useState<string[]>([]);
-
-  function openCrop(file: File, kind: "icon" | "screenshot") {
-    setCropTarget({ file, url: URL.createObjectURL(file), kind });
-  }
-
-  function handleCropDone(file: File) {
-    if (!cropTarget) return;
-    if (cropTarget.kind === "icon") {
-      setIconFile(file);
-      setNewIconUrl(URL.createObjectURL(file));
-      setIconUrl(null);
-    } else {
-      setShotFiles((previous) => [...previous, file]);
-      setNewShotUrls((previous) => [...previous, URL.createObjectURL(file)]);
-    }
-    URL.revokeObjectURL(cropTarget.url);
-    setCropTarget(null);
-
-    if (cropTarget.kind === "screenshot" && shotQueue.length > 1) {
-      const [next, ...rest] = shotQueue;
-      setShotQueue(rest);
-      setCropTarget({ file: next, url: URL.createObjectURL(next), kind: "screenshot" });
-    } else {
-      setShotQueue([]);
-    }
-  }
-
-  function cancelCrop() {
-    if (cropTarget) URL.revokeObjectURL(cropTarget.url);
-    setCropTarget(null);
-    setShotQueue([]);
-  }
 
   function onAppFileChange(file: File | null) {
     setAppFile(file);
@@ -433,7 +394,11 @@ export function AppForm({ initial }: { initial?: Initial }) {
                 className="hidden"
                 onChange={(event) => {
                   const file = event.target.files?.[0];
-                  if (file) openCrop(file, "icon");
+                  if (file) {
+                    setIconFile(file);
+                    setNewIconUrl(URL.createObjectURL(file));
+                    setIconUrl(null);
+                  }
                   event.target.value = "";
                 }}
               />
@@ -475,9 +440,11 @@ export function AppForm({ initial }: { initial?: Initial }) {
                 onChange={(event) => {
                   const files = Array.from(event.target.files ?? []);
                   if (files.length) {
-                    const [first, ...rest] = files;
-                    setShotQueue(rest);
-                    openCrop(first, "screenshot");
+                    setShotFiles((previous) => [...previous, ...files]);
+                    setNewShotUrls((previous) => [
+                      ...previous,
+                      ...files.map((file) => URL.createObjectURL(file)),
+                    ]);
                   }
                   event.target.value = "";
                 }}
@@ -547,17 +514,6 @@ export function AppForm({ initial }: { initial?: Initial }) {
           Cancel
         </Link>
       </div>
-
-      {cropTarget && (
-        <ImageCropper
-          src={cropTarget.url}
-          fileName={cropTarget.file.name}
-          mime={cropTarget.file.type || "image/jpeg"}
-          aspect={cropTarget.kind === "icon" ? 1 : undefined}
-          onDone={handleCropDone}
-          onCancel={cancelCrop}
-        />
-      )}
     </form>
   );
 }
