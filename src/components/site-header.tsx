@@ -48,10 +48,19 @@ export async function SiteHeader() {
               </Link>
               <Link
                 href="/settings/profile"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-slate-200 to-slate-300 text-xs font-semibold text-slate-700 shadow-sm transition-all duration-300 hover:scale-110 hover:from-indigo-100 hover:to-violet-100 hover:text-indigo-700"
+                className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-slate-200 to-slate-300 text-xs font-semibold text-slate-700 shadow-sm transition-all duration-300 hover:scale-110 hover:from-indigo-100 hover:to-violet-100 hover:text-indigo-700"
                 title="Edit profile"
               >
-                {initials(session.name) || session.email[0]?.toUpperCase()}
+                {session.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={session.avatarUrl}
+                    alt={session.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  initials(session.name) || session.email[0]?.toUpperCase()
+                )}
               </Link>
               <LogoutButton />
             </>

@@ -10,10 +10,14 @@ export function LogoutButton() {
 
   async function logout() {
     setBusy(true);
-    await fetch("/api/auth/sign-out", { method: "POST" }).catch(() => {});
-    await fetch("/api/auth/admin-logout", { method: "POST" }).catch(() => {});
-    router.push("/");
-    router.refresh();
+    try {
+      await fetch("/api/auth/sign-out", { method: "POST" }).catch(() => {});
+      await fetch("/api/auth/admin-logout", { method: "POST" });
+      router.push("/");
+      router.refresh();
+    } catch {
+      setBusy(false);
+    }
   }
 
   return (
@@ -26,7 +30,7 @@ export function LogoutButton() {
       className="nav-link inline-flex items-center gap-1.5 rounded-lg p-1.5 text-sm text-slate-500 hover:text-slate-900 disabled:opacity-50 sm:p-0"
     >
       <LogOut size={16} className="sm:hidden" />
-      <span className="hidden sm:inline">Sign out</span>
+      <span className="hidden sm:inline">{busy ? "Signing out…" : "Sign out"}</span>
     </button>
   );
 }
