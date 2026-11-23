@@ -85,10 +85,6 @@ export function AuthForm({ mode, notice, title, description, redirectTo, admin }
       if (access.status === "missing") {
         throw new Error("No account found with this email. Create one first.");
       }
-      if (access.status === "unverified") {
-        throw new Error("Please verify your email first — check your inbox for the 6-digit code.");
-      }
-
       const result = await post("sign-in/email", { email, password });
       if (!result.ok) {
         const message = String(result.data?.message ?? "");
