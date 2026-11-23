@@ -8,11 +8,11 @@ export const runtime = "nodejs";
 
 const schema = z.object({
   name: z.string().trim().min(2).max(100),
-  packageName: z.string().trim().min(3).max(150),
+  packageName: z.string().trim().max(150).default(""),
   description: z.string().trim().max(2000).default(""),
   category: z.string().trim().max(60).default("Other"),
   platform: z.enum(["android", "ios"]),
-  version: z.string().trim().min(1).max(30).default("1.0.0"),
+  version: z.string().trim().max(30).default("1.0.0"),
   installMethod: z.enum(["file", "link"]),
   fileUrl: httpUrl.nullable().optional(),
   externalUrl: httpUrl.nullable().optional(),

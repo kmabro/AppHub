@@ -11,7 +11,7 @@ type Ctx = { params: Promise<{ id: string }> };
 
 const patchSchema = z.object({
   name: z.string().trim().min(2).max(100).optional(),
-  packageName: z.string().trim().min(3).max(150).optional(),
+  packageName: z.string().trim().max(150).optional(),
   description: z.string().trim().max(2000).optional(),
   category: z.string().trim().max(60).optional(),
   platform: z.enum(["android", "ios"]).optional(),

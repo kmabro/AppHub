@@ -83,7 +83,7 @@ export default async function DashboardPage() {
                     {app.name}
                   </span>
                   <span className="block truncate text-xs text-slate-400">
-                    {app.package_name} · {formatDate(app.created_at)}
+                    {formatDate(app.created_at)}
                   </span>
                 </span>
               </Link>

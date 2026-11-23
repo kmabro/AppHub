@@ -64,7 +64,6 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
               <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 transition-colors duration-300 hover:bg-slate-200">
                 {app.category}
               </span>
-              <span className="text-xs text-slate-400">v{app.version}</span>
             </div>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
               {app.name}
@@ -137,13 +136,15 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
         >
           <h2 className="text-sm font-semibold tracking-tight text-slate-900">Details</h2>
           <dl className="mt-5 space-y-5 text-sm">
-            <div className="flex items-start gap-3">
-              <Package size={16} className="mt-0.5 shrink-0 text-indigo-400" />
-              <div className="min-w-0">
-                <dt className="text-xs text-slate-400">Package</dt>
-                <dd className="truncate text-slate-700">{app.package_name}</dd>
+            {app.package_name && (
+              <div className="flex items-start gap-3">
+                <Package size={16} className="mt-0.5 shrink-0 text-indigo-400" />
+                <div className="min-w-0">
+                  <dt className="text-xs text-slate-400">Package</dt>
+                  <dd className="truncate text-slate-700">{app.package_name}</dd>
+                </div>
               </div>
-            </div>
+            )}
             <div className="flex items-start gap-3">
               <Download size={16} className="mt-0.5 shrink-0 text-indigo-400" />
               <div>
