@@ -1,14 +1,24 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, CalendarDays, Download, Package, Pencil, UserRound } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarDays,
+  CheckCircle2,
+  Download,
+  Package,
+  Pencil,
+  Star,
+  UserRound,
+} from "lucide-react";
 import { getSession } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { formatBytes, formatDate, initials } from "@/lib/format";
-import type { AppRecord } from "@/lib/types";
+import type { AppRecord, AppVersion, Review } from "@/lib/types";
 import { PlatformBadge } from "@/components/platform-badge";
 import { InstallButton } from "@/components/install-button";
 import { DeleteButton } from "@/components/delete-button";
+import { ReviewsSection } from "@/components/reviews-section";
 
 export const dynamic = "force-dynamic";
 
@@ -17,16 +27,40 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
   const session = await getSession();
 
   const { rows } = await query<AppRecord>(
-    `SELECT a.*, u.name AS owner_name FROM apps a
+    `SELECT a.*, u.name AS owner_name, u.username AS owner_username,
+            round(avg(r.rating)::numeric, 1) AS avg_rating,
+            count(r.id) AS review_count
+     FROM apps a
      JOIN users u ON u.id = a.owner_id
-     WHERE a.id = $1`,
+     LEFT JOIN reviews r ON r.app_id = a.id
+     WHERE a.id = $1
+     GROUP BY a.id, u.name, u.username`,
     [id]
   );
   const app = rows[0];
   if (!app) notFound();
 
   const canEdit = Boolean(session && (session.id === app.owner_id || session.is_admin));
+  if (app.status === "suspended" && !canEdit) notFound();
+
+  const { rows: allVersions } = await query<AppVersion>(
+    "SELECT * FROM app_versions WHERE app_id = $1 ORDER BY created_at DESC",
+    [id]
+  );
+  const versions = canEdit
+    ? allVersions
+    : allVersions.filter((version) => version.status === "published");
+  const pending = versions.filter((version) => version.status === "pending");
   const fileName = app.file_url?.split("/").pop()?.replace(/^[0-9a-f-]{36}-/i, "") ?? null;
+
+  const { rows: reviews } = await query<Review>(
+    `SELECT r.*, u.name AS author_name, u.username AS author_username, u.avatar_url AS author_avatar
+     FROM reviews r JOIN users u ON u.id = r.user_id
+     WHERE r.app_id = $1 ORDER BY r.updated_at DESC`,
+    [id]
+  );
+  const average = Number(app.avg_rating ?? 0);
+  const reviewCount = Number(app.review_count ?? 0);
 
   return (
     <div className="space-y-6">
@@ -34,10 +68,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
         href="/"
         className="group rise-in inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900"
       >
-        <ArrowLeft
-          size={15}
-          className="transition-transform duration-300 group-hover:-translate-x-1"
-        />
+        <ArrowLeft size={15} className="transition-transform duration-300 group-hover:-translate-x-1" />
         Back to all apps
       </Link>
 
@@ -62,16 +93,42 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <PlatformBadge platform={app.platform} />
-              <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 transition-colors duration-300 hover:bg-slate-200">
+              <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">
                 {app.category}
               </span>
+              <span className="rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-600">
+                v{app.version}
+              </span>
+              {app.status === "suspended" && (
+                <span className="rounded-md bg-red-50 px-2 py-0.5 text-xs font-medium text-red-600">
+                  Suspended
+                </span>
+              )}
             </div>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
               {app.name}
             </h1>
-            <p className="mt-1.5 text-sm text-slate-500">
-              by <span className="font-medium text-slate-700">{app.owner_name || "a student developer"}</span>
-            </p>
+            <div className="mt-1.5 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+              <span>
+                by{" "}
+                {app.owner_username ? (
+                  <Link
+                    href={`/developers/${app.owner_username}`}
+                    className="font-medium text-indigo-600 hover:text-indigo-700"
+                  >
+                    {app.owner_name}
+                  </Link>
+                ) : (
+                  <span className="font-medium text-slate-700">{app.owner_name}</span>
+                )}
+              </span>
+              {reviewCount > 0 && (
+                <span className="inline-flex items-center gap-1 text-amber-600">
+                  <Star size={14} className="fill-amber-400 text-amber-400" />
+                  {average.toFixed(1)} ({reviewCount})
+                </span>
+              )}
+            </div>
 
             <div className="mt-7">
               <InstallButton
@@ -81,6 +138,17 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
                 fileName={fileName}
               />
             </div>
+
+            {canEdit && pending.length > 0 && (
+              <div className="fade-in mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                <p className="font-medium">
+                  {pending.length} update{pending.length === 1 ? "" : "s"} awaiting admin review
+                </p>
+                <p className="mt-0.5 text-xs text-amber-700">
+                  Your current published version stays live until an admin approves the new one.
+                </p>
+              </div>
+            )}
           </div>
 
           {canEdit && (
@@ -89,10 +157,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
                 href={`/apps/${app.id}/edit`}
                 className="btn-soft group inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600"
               >
-                <Pencil
-                  size={14}
-                  className="transition-transform duration-300 group-hover:rotate-12"
-                />
+                <Pencil size={14} className="transition-transform duration-300 group-hover:rotate-12" />
                 Edit
               </Link>
               <DeleteButton id={app.id} name={app.name} redirectTo="/dashboard" />
@@ -113,6 +178,52 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
               {app.description || "The developer hasn't added a description yet."}
             </p>
           </section>
+
+          <section
+            className="rise-in rounded-2xl border border-slate-200/80 bg-white p-6"
+            style={{ "--delay": "200ms" } as React.CSSProperties}
+          >
+            <h2 className="text-lg font-semibold tracking-tight text-slate-900">Version history</h2>
+            <div className="mt-4 divide-y divide-slate-100">
+              {versions.map((version) => (
+                <div key={version.id} className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-semibold text-slate-800">v{version.version}</span>
+                      {version.is_current && (
+                        <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                          <CheckCircle2 size={11} /> Latest
+                        </span>
+                      )}
+                      {version.status === "pending" && (
+                        <span className="rounded bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                          Pending review
+                        </span>
+                      )}
+                      <span className="text-xs text-slate-400">{formatDate(version.created_at)}</span>
+                    </div>
+                    {version.release_notes && (
+                      <p className="mt-1 text-xs leading-relaxed text-slate-500">{version.release_notes}</p>
+                    )}
+                  </div>
+                  <a
+                    href={`/api/download/${app.id}?version=${version.id}`}
+                    className="btn-soft inline-flex w-fit items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600"
+                  >
+                    <Download size={13} /> Download
+                  </a>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <ReviewsSection
+            appId={app.id}
+            reviews={reviews}
+            average={average}
+            count={reviewCount}
+            currentUserId={session?.id}
+          />
 
           {app.screenshots && app.screenshots.length > 0 && (
             <section
@@ -167,7 +278,15 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
               <UserRound size={16} className="mt-0.5 shrink-0 text-indigo-400" />
               <div>
                 <dt className="text-xs text-slate-400">Developer</dt>
-                <dd className="text-slate-700">{app.owner_name}</dd>
+                <dd className="text-slate-700">
+                  {app.owner_username ? (
+                    <Link href={`/developers/${app.owner_username}`} className="text-indigo-600 hover:text-indigo-700">
+                      {app.owner_name}
+                    </Link>
+                  ) : (
+                    app.owner_name
+                  )}
+                </dd>
               </div>
             </div>
             {app.file_size && Number(app.file_size) > 0 && (

@@ -26,6 +26,7 @@ export async function POST(request: Request) {
     password_hash: string;
     is_admin: boolean;
     email_verified: boolean;
+    username: string;
   }>("SELECT * FROM users WHERE email = $1", [email]);
 
   const user = rows[0];

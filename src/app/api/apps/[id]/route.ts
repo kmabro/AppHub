@@ -16,6 +16,7 @@ const patchSchema = z.object({
   category: z.string().trim().max(60).optional(),
   platform: z.enum(["android", "ios"]).optional(),
   version: z.string().trim().min(1).max(30).optional(),
+  releaseNotes: z.string().trim().max(1000).optional(),
   installMethod: z.enum(["file", "link"]).optional(),
   fileUrl: httpUrl.nullable().optional(),
   externalUrl: httpUrl.nullable().optional(),
@@ -28,10 +29,15 @@ async function getApp(id: string) {
   const { rows } = await query<{
     id: string;
     owner_id: string;
+    version: string;
+    platform: "android" | "ios";
+    install_method: "file" | "link";
     file_url: string | null;
+    external_url: string | null;
+    file_size: string | number;
     icon_url: string | null;
     screenshots: string[] | null;
-  }>("SELECT id, owner_id, file_url, icon_url, screenshots FROM apps WHERE id = $1", [id]);
+  }>("SELECT * FROM apps WHERE id = $1", [id]);
   return rows[0] ?? null;
 }
 
@@ -59,11 +65,6 @@ export async function PATCH(request: Request, { params }: Ctx) {
     ["description", "description", d.description],
     ["category", "category", d.category],
     ["platform", "platform", d.platform],
-    ["version", "version", d.version],
-    ["install_method", "installMethod", d.installMethod],
-    ["file_url", "fileUrl", d.fileUrl],
-    ["external_url", "externalUrl", d.externalUrl],
-    ["file_size", "fileSize", d.fileSize],
     ["icon_url", "iconUrl", d.iconUrl],
     [
       "screenshots",
@@ -73,23 +74,44 @@ export async function PATCH(request: Request, { params }: Ctx) {
   ];
 
   const provided = fields.filter(([, , value]) => value !== undefined);
-  const sets = provided.map(([column], index) =>
-    column === "screenshots" ? `${column} = $${index + 2}::jsonb` : `${column} = $${index + 2}`
-  );
-
-  if (sets.length) {
-    await query(
-      `UPDATE apps SET ${sets.join(", ")}, updated_at = now() WHERE id = $1`,
-      [id, ...provided.map(([, , value]) => value)]
+  if (provided.length) {
+    const sets = provided.map(([column], index) =>
+      column === "screenshots" ? `${column} = $${index + 2}::jsonb` : `${column} = $${index + 2}`
     );
+    await query(`UPDATE apps SET ${sets.join(", ")}, updated_at = now() WHERE id = $1`, [
+      id,
+      ...provided.map(([, , value]) => value),
+    ]);
+  }
+
+  const newFile = d.fileUrl !== undefined && d.fileUrl !== app.file_url;
+  const newLink = d.externalUrl !== undefined && d.externalUrl !== app.external_url;
+  const versionChanged = d.version !== undefined && d.version !== app.version;
+  let pending = false;
+
+  if (newFile || newLink || versionChanged) {
+    await query(
+      `INSERT INTO app_versions (
+        app_id, version, release_notes, install_method, platform,
+        file_url, external_url, file_size, status, is_current
+      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'pending',false)`,
+      [
+        id,
+        d.version ?? app.version,
+        d.releaseNotes ?? "",
+        d.installMethod ?? app.install_method,
+        d.platform ?? app.platform,
+        newFile ? d.fileUrl ?? null : app.file_url,
+        newLink ? d.externalUrl ?? null : app.external_url,
+        d.fileSize ?? app.file_size,
+      ]
+    );
+    pending = true;
   }
 
   const oldKeys: string[] = [];
   if (d.iconUrl !== undefined && d.iconUrl !== app.icon_url) {
     oldKeys.push(keyFromUrl(app.icon_url));
-  }
-  if (d.fileUrl !== undefined && d.fileUrl !== app.file_url) {
-    oldKeys.push(keyFromUrl(app.file_url));
   }
   if (d.screenshots !== undefined) {
     for (const url of app.screenshots ?? []) {
@@ -98,7 +120,7 @@ export async function PATCH(request: Request, { params }: Ctx) {
   }
   await Promise.allSettled(oldKeys.filter(Boolean).map((key) => deleteObject(key)));
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, pending });
 }
 
 export async function DELETE(_request: Request, { params }: Ctx) {
@@ -112,7 +134,12 @@ export async function DELETE(_request: Request, { params }: Ctx) {
     return NextResponse.json({ error: "Not allowed" }, { status: 403 });
   }
 
+  const { rows: versions } = await query<{ file_url: string | null }>(
+    "SELECT file_url FROM app_versions WHERE app_id = $1",
+    [id]
+  );
   const keys = [
+    ...versions.map((version) => keyFromUrl(version.file_url)),
     keyFromUrl(app.file_url),
     keyFromUrl(app.icon_url),
     ...(app.screenshots ?? []).map((url) => keyFromUrl(url)),

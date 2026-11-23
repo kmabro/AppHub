@@ -83,7 +83,7 @@ export default async function DashboardPage() {
                     {app.name}
                   </span>
                   <span className="block truncate text-xs text-slate-400">
-                    {formatDate(app.created_at)}
+                    v{app.version} · {formatDate(app.created_at)}
                   </span>
                 </span>
               </Link>

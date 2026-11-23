@@ -17,9 +17,55 @@ export type AppRecord = {
   icon_url: string | null;
   screenshots: string[] | null;
   downloads: number;
+  status?: "published" | "suspended" | "pending";
+  featured?: boolean;
   created_at: string;
   updated_at: string;
   owner_name?: string;
+  owner_username?: string;
+  avg_rating?: string | number | null;
+  review_count?: string | number | null;
+  pending_count?: string | number | null;
+};
+
+export type AppVersion = {
+  id: string;
+  app_id: string;
+  version: string;
+  release_notes: string;
+  install_method: InstallMethod;
+  platform: Platform;
+  file_url: string | null;
+  external_url: string | null;
+  file_size: string | number;
+  status: "published" | "pending" | "rejected";
+  is_current: boolean;
+  created_at: string;
+};
+
+export type Review = {
+  id: string;
+  app_id: string;
+  user_id: string;
+  rating: number;
+  body: string;
+  created_at: string;
+  updated_at: string;
+  author_name?: string;
+  author_username?: string;
+  author_avatar?: string | null;
+};
+
+export type Report = {
+  id: string;
+  reporter_id: string;
+  app_id: string | null;
+  review_id: string | null;
+  reason: string;
+  status: "open" | "resolved" | "dismissed";
+  created_at: string;
+  app_name?: string;
+  review_body?: string;
 };
 
 export const CATEGORIES = [

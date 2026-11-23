@@ -11,6 +11,7 @@ const MAX_SIZE: Record<string, number> = {
   ipa: 200 * 1024 * 1024,
   icon: 5 * 1024 * 1024,
   screenshot: 5 * 1024 * 1024,
+  avatar: 5 * 1024 * 1024,
 };
 
 const CONTENT_TYPE: Record<string, string> = {
@@ -18,10 +19,11 @@ const CONTENT_TYPE: Record<string, string> = {
   ipa: "application/octet-stream",
   icon: "image/png",
   screenshot: "image/png",
+  avatar: "image/png",
 };
 
 const schema = z.object({
-  kind: z.enum(["apk", "ipa", "icon", "screenshot"]),
+  kind: z.enum(["apk", "ipa", "icon", "screenshot", "avatar"]),
   fileName: z.string().min(1).max(200),
   size: z.number().int().positive(),
   contentType: z.string().max(100).optional(),
@@ -51,7 +53,7 @@ export async function POST(request: Request) {
     .replace(/[^\w.\-]+/g, "_")
     .slice(-80);
   const key = `${kind}s/${session.id}/${randomUUID()}-${safeName}`;
-  const isImage = kind === "icon" || kind === "screenshot";
+  const isImage = kind === "icon" || kind === "screenshot" || kind === "avatar";
   const contentType =
     isImage && requestedType?.startsWith("image/") ? requestedType : CONTENT_TYPE[kind];
   const uploadUrl = await createUploadUrl(key, contentType);

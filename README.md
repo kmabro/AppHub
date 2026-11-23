@@ -1,6 +1,6 @@
 # AppHub
 
-A clean, production-ready app catalog for a class: students create an account, verify their email, publish a mobile app, and share it so classmates can find and install it.
+A clean, production-ready app marketplace for a class. Students verify their email, publish apps, manage releases, rate and review each other's work, and build public developer profiles. An administrator keeps control of the marketplace.
 
 **Developed by @kmabro.**
 
@@ -8,25 +8,40 @@ A clean, production-ready app catalog for a class: students create an account, v
 
 ## Features
 
-### For students
+### Students
 - Register with **email verification** (Resend) and sign in securely
-- **Forgot password** flow with a one-hour reset link
-- Resend a verification email if it never arrives
-- Publish an app instantly — name, category, platform, description
-- Upload an **APK/IPA** or provide an install link (Google Drive, TestFlight, App Store…)
-- Add an **app icon** and **screenshots**, with a built-in **crop tool** to choose the visible area
-- See a live **circular upload-progress indicator** with a percentage
-- Edit your apps, replace files, bump the version, remove/replace images, and delete apps
-- Browse the catalog with search, category/platform filters, and sorting
-- Install via a button or a **scannable QR code**, with a real filename like `SkillSwap.apk`
+- **Forgot password** with a one-hour reset link; resend verification if needed
+- Publish apps instantly — name, category, platform, description, version, release notes
+- Upload an **APK/IPA** or an install link (Google Drive, TestFlight, App Store…)
+- Add an **icon** and **screenshots** with a built-in **crop tool** for choosing the visible area
+- Live **circular upload progress** with a percentage
+- Edit apps, replace files, remove images, and delete apps
+- **Version management**: a new upload creates a **pending release**; the published version stays live until an admin approves it
+- **Version history** with release notes, latest-version marker, and downloads of previous versions
+- **Public developer profiles** at `/developers/<username>` with picture, bio, app count, and downloads
+- **Rate and review** apps (1–5 stars), edit/delete your own review, report inappropriate reviews
+- Browse with search, filters, sorting, featured apps, and average ratings
+- Install with a button or a **scannable QR code**; downloads keep real names like `SkillSwap.apk`
+
+### Administrator
+- Admin dashboard at `/admin`
+- View all registered students and all published applications
+- **Suspend/restore** applications and **feature/unfeature** them on the homepage
+- **Approve or reject pending releases** — new uploads never auto-replace the published version
+- **Delete** apps and all their stored files
+- View totals for users, apps, reviews, and open reports
+- **Resolve or dismiss reports** for apps and reviews
+
+### Administrator access
+Your account is already an admin. To give someone else admin rights, run in Neon SQL:
+`UPDATE users SET is_admin = true WHERE email = 'their@email.com';`
 
 ### Built in
-- Secure httpOnly JWT sessions, bcrypt password hashing, server-side ownership checks
-- Neon Postgres for metadata and Neon Object Storage (S3-compatible) for files
-- Files upload directly from the browser via presigned URLs — large APKs never hit the server
-- Old files are removed from storage when replaced or when an app is deleted
+- Secure httpOnly JWT sessions, bcrypt hashing, hashed single-use tokens, server-side ownership/admin checks
+- Neon Postgres for metadata; Neon Object Storage for files via presigned direct uploads
+- Old files removed when replaced or deleted; previous release files kept for history
 - Staggered animations, smooth transitions, responsive layouts, reduced-motion support
-- Loading and error boundaries, security headers, SEO robots/sitemap, production metadata
+- Loading/error boundaries, security headers, robots, sitemap, production metadata
 
 ---
 
@@ -37,8 +52,8 @@ A clean, production-ready app catalog for a class: students create an account, v
 | Framework | Next.js 16 (App Router), React 19, TypeScript |
 | Styling | Tailwind CSS 4, custom design tokens and motion utilities |
 | Database | Neon Postgres (`pg`) |
-| Files | Neon Object Storage via AWS SDK + presigned URLs |
-| Auth | Custom sessions with `jose` + `bcryptjs`; `react-easy-crop` for image cropping |
+| Files | Neon Object Storage (S3-compatible) with AWS SDK presigned URLs |
+| Auth | Custom sessions (`jose`, `bcryptjs`); `react-easy-crop` for cropping |
 | Email | Resend REST API |
 | Hosting | Vercel (recommended) |
 
@@ -47,25 +62,31 @@ A clean, production-ready app catalog for a class: students create an account, v
 ## Project structure
 
 ```
-public/
-  apphub-icon.png          site favicon and brand mark
+public/apphub-icon.png           favicon and brand mark
 scripts/
-  e2e-test.mjs             smoke test for a running local server
-  setup-storage.mjs        one-time CORS setup for the storage bucket
+  e2e-test.mjs                  smoke test for a running server
+  setup-storage.mjs             one-time CORS setup
 src/app/
-  api/auth/                register, login, logout, verify, forgot/reset password, resend verification
-  api/apps/                create, edit, delete apps
-  api/download/[id]/       download counter + presigned file URL with real filename
-  api/upload-url/          presigned upload URLs
-  apps/[id]/               app detail and edit pages
-  apps/new/                publish form
-  dashboard/               user's own apps
+  admin/                        administrator dashboard
+  api/admin/                    app, version, and report moderation
+  api/apps/[id]/reviews/        reviews CRUD
+  api/reviews/[id]/report/      report a review
+  api/auth/                     register, login, logout, verify, password reset, resend verification
+  api/apps/                     create, edit, delete apps
+  api/download/[id]/            download counter + presigned URL (supports ?version=)
+  api/upload-url/               presigned upload URLs
+  api/profile/                  developer profile updates
+  apps/[id]/                    detail with version history and reviews
+  apps/new/                     publish form
+  dashboard/                    your apps
+  developers/[username]/        public developer profile
+  settings/profile/             profile editor
   login, register, forgot-password, reset-password, resend-verification
-  globals.css              design system, animations, utilities
+  globals.css                   design system, animations, utilities
   layout.tsx / template.tsx / loading.tsx / error.tsx
   robots.ts / sitemap.ts
-src/components/            header, footer, cards, forms, cropper, QR, progress, filters
-src/lib/                   db, auth, auth-tokens, email, storage, crop, validation, formatting, types
+src/components/                 header, footer, cards, forms, cropper, QR, progress, reviews, admin actions
+src/lib/                        db, auth, auth-tokens, email, storage, crop, validation, formatting, types
 ```
 
 ---
@@ -80,92 +101,90 @@ npm run dev
 
 Open http://localhost:3000.
 
-Useful commands:
-
 ```bash
-npm run lint      # ESLint
-npm run build     # production build
-npm run start     # serve the production build
-node scripts/e2e-test.mjs   # smoke test against a running server
+npm run lint
+npm run build
+npm run start
+node scripts/e2e-test.mjs     # smoke test against the running server
 ```
 
 ---
 
 ## Environment variables
 
-Copy `.env.example` to `.env.local` and set:
-
 | Variable | Purpose |
 | --- | --- |
 | `DATABASE_URL` | Neon Postgres pooled connection string |
-| `SESSION_SECRET` | Long random string used to sign session cookies |
-| `AWS_REGION` | Storage region (`us-east-2`) |
-| `AWS_ENDPOINT_URL_S3` | Branch storage endpoint |
-| `AWS_ACCESS_KEY_ID` | Scoped credential token ID |
-| `AWS_SECRET_ACCESS_KEY` | Scoped credential S3 secret |
-| `S3_BUCKET` | Bucket name (`apphub`) |
+| `SESSION_SECRET` | Long random string for signing session cookies |
+| `AWS_REGION`, `AWS_ENDPOINT_URL_S3` | Neon Object Storage endpoint settings |
+| `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_BUCKET` | Storage credentials and bucket |
 | `RESEND_API_KEY` | Resend API key for verification/reset emails |
 | `EMAIL_FROM` | Verified sender, e.g. `AppHub <no-reply@yourdomain.com>` |
-| `NEXT_PUBLIC_SITE_URL` | Public site URL, used in QR codes, emails, robots, and sitemap |
+| `NEXT_PUBLIC_SITE_URL` | Public URL used in QR codes, emails, robots, and sitemap |
 
-The bucket must be `public_read` and allow `GET`, `HEAD`, `PUT` with any headers. Configure it once with:
+Set the bucket to `public_read` and allow `GET`, `HEAD`, `PUT` with any headers:
 
 ```bash
 node --env-file=.env.local scripts/setup-storage.mjs
 ```
 
-### Resend notes
-- On the free tier, `onboarding@resend.dev` can only send to the email address that owns the Resend account. Verify your own domain in Resend and set `EMAIL_FROM` to a sender on that domain before inviting classmates.
-- If `RESEND_API_KEY` is missing, links are printed to the server console instead of emailed — useful for local testing.
+Resend's free `onboarding@resend.dev` sender only emails the account owner. Verify your own domain and set `EMAIL_FROM` before classmates register. Without an API key, email links are printed to the server console.
 
 ---
 
 ## Auth flows
 
-1. **Register** → account is created unverified → verification email sent → user clicks the link → `email_verified` is set → user signs in.
-2. **Forgot password** → email → one-hour reset link → choose a new password → all reset tokens are invalidated.
-3. **Resend verification** → available from the sign-in page if the first email is lost.
+1. Register → verification email → click link → account verified → sign in.
+2. Forgot password → one-hour reset link → new password → all reset tokens invalidated.
+3. Resend verification available from sign-in.
 
-Verification and reset tokens are random 32-byte values stored only as SHA-256 hashes, expire after 24 hours and 1 hour respectively, and are single-use.
+Tokens are random 32-byte values stored only as SHA-256 hashes, expire after 24 hours (verify) / 1 hour (reset), and are single-use.
+
+---
+
+## Release workflow
+
+1. First publish creates `v1.0.0` as **published/current** immediately.
+2. Editing with a new file/link/version creates a **pending** version; the live version is unchanged.
+3. Admin opens `/admin`, reviews release notes, and approves or rejects.
+4. On approval the new version becomes current; earlier versions stay available in **Version history**.
 
 ---
 
 ## Storage and limits
 
-| Item | Current limit |
+| Item | Limit |
 | --- | --- |
 | Postgres branch | 1 GB logical size (free plan) |
 | Object storage | 5 GB per project (free plan) |
-| Single upload in this app | 200 MB |
-| Object size in Neon | up to 5 GiB (10 GiB with multipart) |
+| Per upload in this app | 200 MB |
+| Single object in Neon | up to 5 GiB |
 
-APKs and images live in object storage, never in Postgres. The database only stores metadata and URLs. Deleting or replacing an app removes its old files from storage.
+APKs and images live in object storage, never in Postgres. The database stores metadata and URLs only.
 
 ---
 
 ## Deploy to Vercel
 
-1. Push this folder to GitHub:
+1. Push to GitHub:
    ```bash
    git remote add origin <your-repo-url>
    git push -u origin master
    ```
-2. In Vercel, **Add New → Project** and import the repo.
-3. Add every environment variable from `.env.local` under **Settings → Environment Variables**. Set `NEXT_PUBLIC_SITE_URL` to your Vercel URL (or custom domain).
-4. Deploy. Vercel runs `npm run build` automatically; every push to `master` redeploys.
-5. Optional: add a custom domain under **Settings → Domains** and update `NEXT_PUBLIC_SITE_URL` to match.
+2. Vercel → **Add New → Project** → import the repository.
+3. Add all environment variables from `.env.local`; set `NEXT_PUBLIC_SITE_URL` to your Vercel URL or custom domain.
+4. Deploy; every push to `master` redeploys.
+5. Add a custom domain under **Settings → Domains** and update `NEXT_PUBLIC_SITE_URL`.
 
-QR codes and email links use `NEXT_PUBLIC_SITE_URL`, so they work from any device. On `localhost` a phone cannot scan the QR code — deploy first for real testing.
+QR codes and email links use `NEXT_PUBLIC_SITE_URL`, so they work from phones. On localhost a phone cannot scan the QR code — deploy first for real testing.
 
 ---
 
 ## Install notes
 
-- **Android:** downloads an `.apk` with the app's real name. Android asks once to allow installs from unknown sources.
-- **iOS:** Apple does not allow normal sideloading. Use a TestFlight or App Store link. An uploaded `.ipa` is stored but still needs Apple signing.
+- **Android:** downloads an `.apk` named after the app. Android may ask to allow unknown sources once.
+- **iOS:** Apple does not allow normal sideloading — use a TestFlight/App Store link. An uploaded `.ipa` is stored but still needs signing.
 
 ---
 
-## Credits
-
-UI and development by **@kmabro**, built for our class.
+**UI and development by @kmabro — built for our class.**

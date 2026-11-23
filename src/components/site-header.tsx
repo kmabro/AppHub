@@ -31,6 +31,11 @@ export async function SiteHeader() {
           </Link>
           {session ? (
             <>
+              {session.is_admin && (
+                <Link href="/admin" className="nav-link hidden text-sm text-slate-600 hover:text-slate-900 md:inline">
+                  Admin
+                </Link>
+              )}
               <Link
                 href="/apps/new"
                 className="btn-primary group inline-flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-white sm:px-4"
@@ -42,9 +47,9 @@ export async function SiteHeader() {
                 <span className="hidden sm:inline">Publish app</span>
               </Link>
               <Link
-                href="/dashboard"
+                href="/settings/profile"
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-slate-200 to-slate-300 text-xs font-semibold text-slate-700 shadow-sm transition-all duration-300 hover:scale-110 hover:from-indigo-100 hover:to-violet-100 hover:text-indigo-700"
-                title={session.name}
+                title="Edit profile"
               >
                 {initials(session.name) || session.email[0]?.toUpperCase()}
               </Link>

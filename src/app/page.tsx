@@ -26,7 +26,7 @@ export default async function Home({
   const platform = (sp.platform ?? "").slice(0, 20);
   const sort = sp.sort ?? "newest";
 
-  const conditions: string[] = [];
+  const conditions: string[] = ["a.status <> 'suspended'"];
   const params: unknown[] = [];
 
   if (q) {
@@ -54,9 +54,14 @@ export default async function Home({
         : "a.created_at DESC";
 
   const { rows: apps } = await query<AppRecord>(
-    `SELECT a.*, u.name AS owner_name FROM apps a
+    `SELECT a.*, u.name AS owner_name,
+            round(avg(r.rating)::numeric, 1) AS avg_rating,
+            count(r.id) AS review_count
+     FROM apps a
      JOIN users u ON u.id = a.owner_id
+     LEFT JOIN reviews r ON r.app_id = a.id
      ${where}
+     GROUP BY a.id, u.name
      ORDER BY ${order}
      LIMIT 60`,
     params
@@ -69,6 +74,18 @@ export default async function Home({
       (SELECT count(*) FROM users) AS developers`
   );
   const s = stats.rows[0];
+
+  const { rows: featured } = await query<AppRecord>(
+    `SELECT a.*, u.name AS owner_name,
+            round(avg(r.rating)::numeric, 1) AS avg_rating,
+            count(r.id) AS review_count
+     FROM apps a JOIN users u ON u.id = a.owner_id
+     LEFT JOIN reviews r ON r.app_id = a.id
+     WHERE a.featured = true AND a.status = 'published'
+     GROUP BY a.id, u.name
+     ORDER BY a.created_at DESC
+     LIMIT 6`
+  );
 
   return (
     <div className="space-y-10">
@@ -135,6 +152,26 @@ export default async function Home({
           </div>
         ))}
       </section>
+
+      {featured.length > 0 && (
+        <section className="space-y-4">
+          <div className="rise-in flex items-end justify-between gap-3">
+            <div>
+              <span className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-500">
+                Featured
+              </span>
+              <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-900">
+                Handpicked for the class
+              </h2>
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {featured.map((app, index) => (
+              <AppCard key={app.id} app={app} index={index} />
+            ))}
+          </div>
+        </section>
+      )}
 
       <section id="browse" className="scroll-mt-24 space-y-6">
         <div className="rise-in" style={{ "--delay": "480ms" } as React.CSSProperties}>

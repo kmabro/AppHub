@@ -13,6 +13,7 @@ const schema = z.object({
   category: z.string().trim().max(60).default("Other"),
   platform: z.enum(["android", "ios"]),
   version: z.string().trim().max(30).default("1.0.0"),
+  releaseNotes: z.string().trim().max(1000).default(""),
   installMethod: z.enum(["file", "link"]),
   fileUrl: httpUrl.nullable().optional(),
   externalUrl: httpUrl.nullable().optional(),
@@ -65,5 +66,23 @@ export async function POST(request: Request) {
     ]
   );
 
-  return NextResponse.json({ id: rows[0].id }, { status: 201 });
+  const appId = rows[0].id;
+  await query(
+    `INSERT INTO app_versions (
+      app_id, version, release_notes, install_method, platform,
+      file_url, external_url, file_size, status, is_current
+    ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'published',true)`,
+    [
+      appId,
+      data.version,
+      data.releaseNotes,
+      data.installMethod,
+      data.platform,
+      data.fileUrl ?? null,
+      data.externalUrl ?? null,
+      data.fileSize,
+    ]
+  );
+
+  return NextResponse.json({ id: appId }, { status: 201 });
 }

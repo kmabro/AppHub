@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
-import { ArrowUpRight, Download } from "lucide-react";
+import { ArrowUpRight, Download, Star } from "lucide-react";
 import type { AppRecord } from "@/lib/types";
 import { formatBytes, initials } from "@/lib/format";
 import { PlatformBadge } from "./platform-badge";
@@ -36,7 +36,9 @@ export function AppCard({ app, index = 0 }: { app: AppRecord; index?: number }) 
               className="shrink-0 text-slate-300 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-indigo-500"
             />
           </div>
-          <p className="mt-0.5 truncate text-xs text-slate-500">{app.category}</p>
+          <p className="mt-0.5 truncate text-xs text-slate-500">
+            {app.category} · v{app.version}
+          </p>
         </div>
       </div>
 
@@ -47,6 +49,12 @@ export function AppCard({ app, index = 0 }: { app: AppRecord; index?: number }) 
       <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3.5">
         <div className="flex items-center gap-2">
           <PlatformBadge platform={app.platform} />
+          {Number(app.avg_rating ?? 0) > 0 && (
+            <span className="inline-flex items-center gap-1 text-xs text-slate-500">
+              <Star size={12} className="fill-amber-400 text-amber-400" />
+              {Number(app.avg_rating).toFixed(1)}
+            </span>
+          )}
           <span className="text-xs text-slate-400">{formatBytes(Number(app.file_size))}</span>
         </div>
         <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2 py-1 text-xs font-medium text-slate-500 transition-colors duration-300 group-hover:bg-indigo-50 group-hover:text-indigo-600">

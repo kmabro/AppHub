@@ -71,6 +71,7 @@ export function AppForm({ initial }: { initial?: Initial }) {
 
   const [name, setName] = useState(initial?.name ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
+  const [releaseNotes, setReleaseNotes] = useState("");
   const [category, setCategory] = useState(initial?.category ?? "Education");
   const [platform, setPlatform] = useState<Platform>(initial?.platform ?? "android");
   const [version, setVersion] = useState(initial?.version ?? "1.0.0");
@@ -196,6 +197,7 @@ export function AppForm({ initial }: { initial?: Initial }) {
         category,
         platform,
         version: version.trim() || "1.0.0",
+        releaseNotes: releaseNotes.trim(),
         installMethod,
         fileUrl: installMethod === "file" ? fileUrl : null,
         externalUrl: installMethod === "link" ? externalUrl.trim() : null,
@@ -301,22 +303,20 @@ export function AppForm({ initial }: { initial?: Initial }) {
             />
           </div>
 
-          {editing && (
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="version">
-                Version
-              </label>
-              <input
-                id="version"
-                value={version}
-                onChange={(event) => setVersion(event.target.value)}
-                className={inputClass}
-              />
-              <p className="mt-1.5 text-xs text-slate-400">
-                Bump this when you upload a new file.
-              </p>
-            </div>
-          )}
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="version">
+              Version
+            </label>
+            <input
+              id="version"
+              value={version}
+              onChange={(event) => setVersion(event.target.value)}
+              className={inputClass}
+            />
+            <p className="mt-1.5 text-xs text-slate-400">
+              Start at 1.0.0 and bump it whenever you upload a new file.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -383,6 +383,25 @@ export function AppForm({ initial }: { initial?: Initial }) {
             </p>
           </div>
         )}
+
+        <div className="mt-4">
+          <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="release-notes">
+            Release notes
+          </label>
+          <textarea
+            id="release-notes"
+            value={releaseNotes}
+            onChange={(event) => setReleaseNotes(event.target.value)}
+            rows={2}
+            maxLength={1000}
+            className={`${inputClass} resize-y`}
+          />
+          <p className="mt-1.5 text-xs text-slate-400">
+            {editing
+              ? "Describe what changed in this version. New releases are reviewed before going live."
+              : "Optional — tell people what this first release includes."}
+          </p>
+        </div>
       </section>
 
       <section

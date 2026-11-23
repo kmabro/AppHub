@@ -15,6 +15,7 @@ export type SessionUser = {
   name: string;
   email: string;
   is_admin: boolean;
+  username?: string;
 };
 
 export async function createSession(user: SessionUser) {
@@ -22,6 +23,7 @@ export async function createSession(user: SessionUser) {
     name: user.name,
     email: user.email,
     is_admin: user.is_admin,
+    username: user.username ?? "",
   })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(user.id)
@@ -52,10 +54,16 @@ export async function getSession(): Promise<SessionUser | null> {
       name: String(payload.name ?? ""),
       email: String(payload.email ?? ""),
       is_admin: Boolean(payload.is_admin),
+      username: String(payload.username ?? ""),
     };
   } catch {
     return null;
   }
+}
+
+export async function getAdminSession(): Promise<SessionUser | null> {
+  const session = await getSession();
+  return session?.is_admin ? session : null;
 }
 
 export async function deleteSession() {
