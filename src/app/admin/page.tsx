@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Flag, Layers3, ShieldCheck, Users } from "lucide-react";
-import { getAdminSession } from "@/lib/auth";
+import { getAdminSession, getSession } from "@/lib/auth";
 import { query } from "@/lib/db";
 import { formatDate } from "@/lib/format";
 import { AdminActionButton } from "@/components/admin-action-button";
@@ -11,7 +11,9 @@ export const metadata = { title: "Admin" };
 
 export default async function AdminPage() {
   const admin = await getAdminSession();
-  if (!admin) redirect("/dashboard");
+  if (!admin) {
+    redirect((await getSession()) ? "/dashboard" : "/admin/login");
+  }
 
   const stats = await query<{
     users: string;
@@ -33,6 +35,8 @@ export default async function AdminPage() {
     email: string;
     username: string | null;
     is_admin: boolean;
+    is_blocked: boolean;
+    email_verified: boolean;
     created_at: string;
     app_count: string;
   }>(
@@ -241,19 +245,52 @@ export default async function AdminPage() {
       <Section title="Registered students" subtitle="Everyone with an account on AppHub.">
         <div className="divide-y divide-slate-100">
           {users.map((user) => (
-            <div key={user.id} className="flex flex-col gap-1 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="font-medium text-slate-900">
-                  {user.name}
+            <div
+              key={user.id}
+              className="flex flex-col gap-3 px-5 py-4 lg:flex-row lg:items-center lg:justify-between"
+            >
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-medium text-slate-900">{user.name}</p>
                   {user.is_admin && (
-                    <span className="ml-2 rounded bg-indigo-50 px-2 py-0.5 text-xs text-indigo-600">Admin</span>
+                    <span className="rounded bg-indigo-50 px-2 py-0.5 text-xs text-indigo-600">Admin</span>
                   )}
-                </p>
-                <p className="text-xs text-slate-500">
-                  {user.email} · @{user.username || "—"} · joined {formatDate(user.created_at)}
+                  {user.is_blocked && (
+                    <span className="rounded bg-red-50 px-2 py-0.5 text-xs text-red-600">Blocked</span>
+                  )}
+                  {!user.email_verified && (
+                    <span className="rounded bg-amber-50 px-2 py-0.5 text-xs text-amber-700">
+                      Unverified
+                    </span>
+                  )}
+                </div>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  {user.email} · @{user.username || "—"} · {user.app_count} apps · joined{" "}
+                  {formatDate(user.created_at)}
                 </p>
               </div>
-              <p className="text-xs text-slate-500">{user.app_count} apps</p>
+              <div className="flex flex-wrap gap-2">
+                {!user.email_verified && (
+                  <AdminActionButton
+                    endpoint={`/api/admin/users/${user.id}`}
+                    action="verify"
+                    label="Verify"
+                  />
+                )}
+                <AdminActionButton
+                  endpoint={`/api/admin/users/${user.id}`}
+                  action={user.is_blocked ? "unblock" : "block"}
+                  label={user.is_blocked ? "Unblock" : "Block"}
+                  confirmText={user.is_blocked ? undefined : `Block ${user.name}?`}
+                />
+                <AdminActionButton
+                  endpoint={`/api/admin/users/${user.id}`}
+                  action="delete"
+                  label="Delete"
+                  danger
+                  confirmText={`Delete ${user.name}, their apps, and all their files?`}
+                />
+              </div>
             </div>
           ))}
         </div>

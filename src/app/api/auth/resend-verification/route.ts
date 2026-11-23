@@ -20,10 +20,11 @@ export async function POST(request: Request) {
     [parsed.data.email]
   );
 
+  let emailSent = false;
   if (rows[0] && !rows[0].email_verified) {
     const token = await createAuthToken(rows[0].id, "verify");
-    await sendVerificationEmail(rows[0].email, token);
+    emailSent = await sendVerificationEmail(rows[0].email, token);
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, emailSent });
 }

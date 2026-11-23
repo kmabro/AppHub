@@ -20,10 +20,11 @@ export async function POST(request: Request) {
     [parsed.data.email]
   );
 
+  let emailSent = false;
   if (rows[0]) {
     const token = await createAuthToken(rows[0].id, "reset");
-    await sendPasswordResetEmail(rows[0].email, token);
+    emailSent = await sendPasswordResetEmail(rows[0].email, token);
   }
 
-  return NextResponse.json({ ok: true });
+  return NextResponse.json({ ok: true, emailSent });
 }

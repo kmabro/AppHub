@@ -7,7 +7,7 @@ import { createSession } from "@/lib/auth";
 export const runtime = "nodejs";
 
 const schema = z.object({
-  email: z.string().trim().toLowerCase().email(),
+  email: z.string().trim().min(1).max(120),
   password: z.string().min(1),
 });
 
@@ -15,23 +15,33 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const parsed = schema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: "Enter your email and password" }, { status: 400 });
+    return NextResponse.json({ error: "Enter your email or username and password" }, { status: 400 });
   }
 
-  const { email, password } = parsed.data;
+  const identifier = parsed.data.email;
+  const byEmail = identifier.includes("@");
   const { rows } = await query<{
     id: string;
     name: string;
     email: string;
+    username: string;
     password_hash: string;
     is_admin: boolean;
     email_verified: boolean;
-    username: string;
-  }>("SELECT * FROM users WHERE email = $1", [email]);
+    is_blocked: boolean;
+  }>(
+    byEmail
+      ? "SELECT * FROM users WHERE email = $1"
+      : "SELECT * FROM users WHERE lower(username) = lower($1)",
+    [identifier]
+  );
 
   const user = rows[0];
-  if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+  if (!user || !(await bcrypt.compare(parsed.data.password, user.password_hash))) {
     return NextResponse.json({ error: "Incorrect email or password" }, { status: 401 });
+  }
+  if (user.is_blocked) {
+    return NextResponse.json({ error: "This account has been blocked by an administrator" }, { status: 403 });
   }
   if (!user.email_verified) {
     return NextResponse.json(

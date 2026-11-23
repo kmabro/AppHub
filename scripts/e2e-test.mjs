@@ -18,7 +18,7 @@ for (const path of [
   "/forgot-password",
   "/reset-password",
   "/resend-verification",
-  "/developers/kmabro786110",
+  "/developers/adminapphub",
   "/robots.txt",
   "/sitemap.xml",
 ]) {

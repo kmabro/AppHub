@@ -3,18 +3,26 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ArrowRight, Loader2, ShieldCheck } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
 
-type Props = { mode: "login" | "register"; notice?: string };
+type Props = {
+  mode: "login" | "register";
+  notice?: string;
+  title?: string;
+  description?: string;
+  redirectTo?: string;
+};
 
 const notices: Record<string, string> = {
   registered: "Account created. Check your email for a verification link.",
+  "email-failed":
+    "Account created, but the verification email could not be sent. Ask the administrator to verify your account.",
   verified: "Email verified. You can sign in now.",
   reset: "Password updated. Sign in with your new password.",
   "verify-invalid": "That verification link is invalid or has expired. Request a new one.",
 };
 
-export function AuthForm({ mode, notice }: Props) {
+export function AuthForm({ mode, notice, title, description, redirectTo }: Props) {
   const router = useRouter();
   const isRegister = mode === "register";
   const [name, setName] = useState("");
@@ -22,6 +30,7 @@ export function AuthForm({ mode, notice }: Props) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -33,19 +42,23 @@ export function AuthForm({ mode, notice }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(isRegister ? { name, email, password } : { email, password }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setError(data.error || "Something went wrong");
+        setError(data.error || `Request failed (${res.status}). Please try again.`);
         return;
       }
       if (isRegister) {
-        router.push("/login?registered=1");
+        router.push(
+          data.autoVerified
+            ? "/login?verified=1"
+            : `/login?registered=1${data.emailSent ? "" : "&email-failed=1"}`
+        );
       } else {
-        router.push("/dashboard");
+        router.push(redirectTo || "/dashboard");
       }
       router.refresh();
     } catch {
-      setError("Could not reach the server. Try again.");
+      setError("Could not connect. Check your connection and try again.");
     } finally {
       setBusy(false);
     }
@@ -67,12 +80,13 @@ export function AuthForm({ mode, notice }: Props) {
         style={{ "--delay": "80ms" } as React.CSSProperties}
       >
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-          {isRegister ? "Create your account" : "Welcome back"}
+          {title || (isRegister ? "Create your account" : "Welcome back")}
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-slate-500">
-          {isRegister
-            ? "Join AppHub to publish apps and install the ones your classmates shared."
-            : "Sign in to manage the apps you have published."}
+          {description ||
+            (isRegister
+              ? "Join AppHub to publish apps and install the ones your classmates shared."
+              : "Sign in to manage the apps you have published.")}
         </p>
 
         {notice && notices[notice] && (
@@ -102,14 +116,15 @@ export function AuthForm({ mode, notice }: Props) {
           )}
           <div>
             <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-700">
-              Email address
+              {isRegister ? "Email address" : "Email or username"}
             </label>
             <input
               id="email"
-              type="email"
+              type="text"
+              inputMode="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              autoComplete="email"
+              autoComplete="username"
               required
               className="field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-base sm:text-sm"
             />
@@ -128,16 +143,26 @@ export function AuthForm({ mode, notice }: Props) {
                 </Link>
               )}
             </div>
-            <input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              autoComplete={isRegister ? "new-password" : "current-password"}
-              minLength={isRegister ? 8 : 1}
-              required
-              className="field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-base sm:text-sm"
-            />
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                autoComplete={isRegister ? "new-password" : "current-password"}
+                minLength={isRegister ? 8 : 1}
+                required
+                className="field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 pr-11 text-base sm:text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((value) => !value)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+              >
+                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+              </button>
+            </div>
           </div>
 
           {error && (

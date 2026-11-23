@@ -33,8 +33,13 @@ A clean, production-ready app marketplace for a class. Students verify their ema
 - **Resolve or dismiss reports** for apps and reviews
 
 ### Administrator access
-Your account is already an admin. To give someone else admin rights, run in Neon SQL:
-`UPDATE users SET is_admin = true WHERE email = 'their@email.com';`
+A separate admin account is pre-created:
+
+- Sign-in: **`/admin/login`**
+- Username: **`adminapphub`**
+- Password: **`aaaaaaaa`**
+
+The admin panel is completely separate from student accounts. Admins can view all registered students and published apps, block/unblock or delete user accounts, verify accounts, approve/reject releases, feature/suspend/delete apps, and resolve reports. To give someone else admin rights: `UPDATE users SET is_admin = true WHERE email = 'their@email.com';`
 
 ### Built in
 - Secure httpOnly JWT sessions, bcrypt hashing, hashed single-use tokens, server-side ownership/admin checks
@@ -128,7 +133,7 @@ Set the bucket to `public_read` and allow `GET`, `HEAD`, `PUT` with any headers:
 node --env-file=.env.local scripts/setup-storage.mjs
 ```
 
-Resend's free `onboarding@resend.dev` sender only emails the account owner. Verify your own domain and set `EMAIL_FROM` before classmates register. Without an API key, email links are printed to the server console.
+Resend's free `onboarding@resend.dev` sender only emails the account owner. Verify your own domain and set `EMAIL_FROM` to send to classmates. If an email cannot be delivered, registration still succeeds and the account is **auto-verified** so nobody is blocked — the link is also printed to the server console, and an admin can verify accounts manually from `/admin`. Students can publish their first app immediately without admin approval.
 
 ---
 
