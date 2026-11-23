@@ -133,7 +133,7 @@ Set the bucket to `public_read` and allow `GET`, `HEAD`, `PUT` with any headers:
 node --env-file=.env.local scripts/setup-storage.mjs
 ```
 
-Resend's free `onboarding@resend.dev` sender only emails the account owner. Verify your own domain and set `EMAIL_FROM` to send to classmates. If an email cannot be delivered, registration still succeeds and the account is **auto-verified** so nobody is blocked — the link is also printed to the server console, and an admin can verify accounts manually from `/admin`. Students can publish their first app immediately without admin approval.
+Resend's free `onboarding@resend.dev` sender only emails the account owner. **To send real verification and password-reset emails to classmates, verify a domain in Resend and set `EMAIL_FROM` to an address on that domain.** If delivery fails, the app shows an on-screen **Verify my account** / **Continue** link immediately after registration or a reset request, so students are never blocked and no admin approval is needed. Links are also printed to the server console, and admins can verify accounts manually from `/admin`. Students can publish their first app immediately.
 
 ---
 

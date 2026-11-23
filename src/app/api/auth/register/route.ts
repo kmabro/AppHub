@@ -44,15 +44,10 @@ export async function POST(request: Request) {
   const token = await createAuthToken(rows[0].id, "verify");
   const emailSent = await sendVerificationEmail(email, token);
 
-  if (!emailSent) {
-    await query("UPDATE users SET email_verified = true WHERE id = $1", [rows[0].id]);
-    await query("DELETE FROM auth_tokens WHERE user_id = $1 AND type = 'verify'", [rows[0].id]);
-  }
-
   return NextResponse.json({
     ok: true,
-    needsVerification: emailSent,
+    needsVerification: true,
     emailSent,
-    autoVerified: !emailSent,
+    verificationToken: emailSent ? null : token,
   });
 }

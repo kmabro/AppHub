@@ -22,6 +22,7 @@ export function EmailActionForm({
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
+  const [fallbackLink, setFallbackLink] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function submit(event: React.FormEvent) {
@@ -36,6 +37,10 @@ export function EmailActionForm({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Something went wrong");
+      if (data.resetToken) setFallbackLink(`/reset-password?token=${encodeURIComponent(data.resetToken)}`);
+      if (data.verificationToken) {
+        setFallbackLink(`/verify-email?token=${encodeURIComponent(data.verificationToken)}`);
+      }
       setSent(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not send email");
@@ -67,6 +72,19 @@ export function EmailActionForm({
               Check your inbox and spam folder. If you don&apos;t see it, check the address and try
               again.
             </p>
+            {fallbackLink && (
+              <div className="mt-3 border-t border-emerald-200 pt-3">
+                <p className="text-xs font-medium text-emerald-800">
+                  Email delivery isn&apos;t configured for this address — continue here instead:
+                </p>
+                <Link
+                  href={fallbackLink}
+                  className="btn-primary mt-2 inline-flex rounded-lg px-3 py-2 text-xs font-semibold text-white"
+                >
+                  Continue →
+                </Link>
+              </div>
+            )}
           </div>
         ) : (
           <form onSubmit={submit} className="mt-6 space-y-4">

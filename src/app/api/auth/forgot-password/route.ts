@@ -21,10 +21,11 @@ export async function POST(request: Request) {
   );
 
   let emailSent = false;
+  let resetToken: string | null = null;
   if (rows[0]) {
-    const token = await createAuthToken(rows[0].id, "reset");
-    emailSent = await sendPasswordResetEmail(rows[0].email, token);
+    resetToken = await createAuthToken(rows[0].id, "reset");
+    emailSent = await sendPasswordResetEmail(rows[0].email, resetToken);
   }
 
-  return NextResponse.json({ ok: true, emailSent });
+  return NextResponse.json({ ok: true, emailSent, resetToken: emailSent ? null : resetToken });
 }

@@ -21,10 +21,15 @@ export async function POST(request: Request) {
   );
 
   let emailSent = false;
+  let verificationToken: string | null = null;
   if (rows[0] && !rows[0].email_verified) {
-    const token = await createAuthToken(rows[0].id, "verify");
-    emailSent = await sendVerificationEmail(rows[0].email, token);
+    verificationToken = await createAuthToken(rows[0].id, "verify");
+    emailSent = await sendVerificationEmail(rows[0].email, verificationToken);
   }
 
-  return NextResponse.json({ ok: true, emailSent });
+  return NextResponse.json({
+    ok: true,
+    emailSent,
+    verificationToken: emailSent ? null : verificationToken,
+  });
 }

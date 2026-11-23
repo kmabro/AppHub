@@ -49,9 +49,9 @@ export function AuthForm({ mode, notice, title, description, redirectTo }: Props
       }
       if (isRegister) {
         router.push(
-          data.autoVerified
-            ? "/login?verified=1"
-            : `/login?registered=1${data.emailSent ? "" : "&email-failed=1"}`
+          data.verificationToken
+            ? `/verify-email?token=${encodeURIComponent(data.verificationToken)}`
+            : "/login?registered=1"
         );
       } else {
         router.push(redirectTo || "/dashboard");
