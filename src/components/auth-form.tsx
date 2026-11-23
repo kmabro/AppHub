@@ -71,10 +71,9 @@ export function AuthForm({ mode }: Props) {
                 id="name"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                placeholder="e.g. Ayesha Khan"
                 autoComplete="name"
                 required
-                className="field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm placeholder:text-slate-400"
+                className="field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm"
               />
             </div>
           )}
@@ -87,10 +86,9 @@ export function AuthForm({ mode }: Props) {
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="you@school.edu"
               autoComplete="email"
               required
-              className="field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm placeholder:text-slate-400"
+              className="field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm"
             />
           </div>
           <div>
@@ -102,11 +100,10 @@ export function AuthForm({ mode }: Props) {
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder={isRegister ? "At least 8 characters" : "Your password"}
               autoComplete={isRegister ? "new-password" : "current-password"}
               minLength={isRegister ? 8 : 1}
               required
-              className="field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm placeholder:text-slate-400"
+              className="field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm"
             />
           </div>
 

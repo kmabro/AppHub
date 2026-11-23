@@ -7,7 +7,7 @@ import { ImagePlus, Loader2, Plus, UploadCloud, X } from "lucide-react";
 import { CATEGORIES, type AppRecord, type InstallMethod, type Platform } from "@/lib/types";
 
 const inputClass =
-  "field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm placeholder:text-slate-400";
+  "field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm";
 const labelClass = "mb-1.5 block text-sm font-medium text-slate-700";
 
 type Initial = Pick<
@@ -180,7 +180,6 @@ export function AppForm({ initial }: { initial?: Initial }) {
               id="app-name"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="e.g. Study Planner"
               className={inputClass}
               required
             />
@@ -193,7 +192,6 @@ export function AppForm({ initial }: { initial?: Initial }) {
               id="package-name"
               value={packageName}
               onChange={(event) => setPackageName(event.target.value)}
-              placeholder="com.school.studyplanner"
               className={inputClass}
               required
             />
@@ -207,7 +205,6 @@ export function AppForm({ initial }: { initial?: Initial }) {
               id="version"
               value={version}
               onChange={(event) => setVersion(event.target.value)}
-              placeholder="1.0.0"
               className={inputClass}
             />
           </div>
@@ -255,7 +252,6 @@ export function AppForm({ initial }: { initial?: Initial }) {
               onChange={(event) => setDescription(event.target.value)}
               rows={4}
               maxLength={2000}
-              placeholder="What does your app do? What makes it useful?"
               className={`${inputClass} resize-y`}
             />
           </div>
@@ -335,7 +331,6 @@ export function AppForm({ initial }: { initial?: Initial }) {
               type="url"
               value={externalUrl}
               onChange={(event) => setExternalUrl(event.target.value)}
-              placeholder="https://testflight.apple.com/join/…"
               className={inputClass}
             />
             <p className="mt-1 text-xs text-slate-400">
