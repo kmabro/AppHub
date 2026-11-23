@@ -53,39 +53,42 @@ export default async function Home({
         ? "a.name ASC"
         : "a.created_at DESC";
 
-  const { rows: apps } = await query<AppRecord>(
-    `SELECT a.*, u.name AS owner_name,
-            round(avg(r.rating)::numeric, 1) AS avg_rating,
-            count(r.id) AS review_count
-     FROM apps a
-     JOIN users u ON u.id = a.owner_id
-     LEFT JOIN reviews r ON r.app_id = a.id
-     ${where}
-     GROUP BY a.id, u.name
-     ORDER BY ${order}
-     LIMIT 60`,
-    params
-  );
+  const [appsResult, stats, featuredResult] = await Promise.all([
+    query<AppRecord>(
+      `SELECT a.*, u.name AS owner_name,
+              round(avg(r.rating)::numeric, 1) AS avg_rating,
+              count(r.id) AS review_count
+       FROM apps a
+       JOIN users u ON u.id = a.owner_id
+       LEFT JOIN reviews r ON r.app_id = a.id
+       ${where}
+       GROUP BY a.id, u.name
+       ORDER BY ${order}
+       LIMIT 60`,
+      params
+    ),
+    query<{ apps: string; downloads: string; developers: string }>(
+      `SELECT
+        (SELECT count(*) FROM apps) AS apps,
+        (SELECT COALESCE(sum(downloads), 0) FROM apps) AS downloads,
+        (SELECT count(*) FROM users WHERE is_admin = false) AS developers`
+    ),
+    query<AppRecord>(
+      `SELECT a.*, u.name AS owner_name,
+              round(avg(r.rating)::numeric, 1) AS avg_rating,
+              count(r.id) AS review_count
+       FROM apps a JOIN users u ON u.id = a.owner_id
+       LEFT JOIN reviews r ON r.app_id = a.id
+       WHERE a.featured = true AND a.status = 'published'
+       GROUP BY a.id, u.name
+       ORDER BY a.created_at DESC
+       LIMIT 6`
+    ),
+  ]);
 
-  const stats = await query<{ apps: string; downloads: string; developers: string }>(
-    `SELECT
-      (SELECT count(*) FROM apps) AS apps,
-      (SELECT COALESCE(sum(downloads), 0) FROM apps) AS downloads,
-      (SELECT count(*) FROM users WHERE is_admin = false) AS developers`
-  );
+  const apps = appsResult.rows;
   const s = stats.rows[0];
-
-  const { rows: featured } = await query<AppRecord>(
-    `SELECT a.*, u.name AS owner_name,
-            round(avg(r.rating)::numeric, 1) AS avg_rating,
-            count(r.id) AS review_count
-     FROM apps a JOIN users u ON u.id = a.owner_id
-     LEFT JOIN reviews r ON r.app_id = a.id
-     WHERE a.featured = true AND a.status = 'published'
-     GROUP BY a.id, u.name
-     ORDER BY a.created_at DESC
-     LIMIT 6`
-  );
+  const featured = featuredResult.rows;
 
   return (
     <div className="space-y-10">

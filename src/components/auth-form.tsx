@@ -46,6 +46,17 @@ export function AuthForm({ mode, notice, title, description, redirectTo, admin }
     setBusy(true);
     setError("");
     try {
+      const access = await fetch("/api/auth/check-access", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      })
+        .then((response) => response.json())
+        .catch(() => ({ status: "active" }));
+
+      if (access.status === "deleted") {
+        throw new Error("This email was removed by an administrator. Contact the admin for access.");
+      }
       if (isRegister) {
         const result = await post("sign-up/email", { name, email, password });
         if (!result.ok) throw new Error(result.data?.message || "Could not create account");
@@ -68,8 +79,24 @@ export function AuthForm({ mode, notice, title, description, redirectTo, admin }
         return;
       }
 
+      if (access.status === "blocked") {
+        throw new Error("Your account has been blocked by an administrator.");
+      }
+      if (access.status === "missing") {
+        throw new Error("No account found with this email. Create one first.");
+      }
+      if (access.status === "unverified") {
+        throw new Error("Please verify your email first — check your inbox for the 6-digit code.");
+      }
+
       const result = await post("sign-in/email", { email, password });
-      if (!result.ok) throw new Error(result.data?.message || "Incorrect email or password");
+      if (!result.ok) {
+        const message = String(result.data?.message ?? "");
+        if (/verif/i.test(message)) {
+          throw new Error("Please verify your email first — check your inbox for the 6-digit code.");
+        }
+        throw new Error("Incorrect email or password");
+      }
       router.push(redirectTo || "/dashboard");
       router.refresh();
     } catch (err) {

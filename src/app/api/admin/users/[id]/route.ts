@@ -60,7 +60,31 @@ export async function PATCH(request: Request, { params }: Ctx) {
     keys.push(...(app.screenshots ?? []).map((url) => keyFromUrl(url)));
   }
 
+  const { rows: deletedTarget } = await query<{ email: string }>(
+    "SELECT email FROM users WHERE id = $1",
+    [id]
+  );
+  const email = deletedTarget[0]?.email?.toLowerCase();
+
   await query("DELETE FROM users WHERE id = $1", [id]);
+  if (email) {
+    await query(
+      "INSERT INTO deleted_emails (email) VALUES ($1) ON CONFLICT DO NOTHING",
+      [email]
+    );
+    try {
+      const origin =
+        process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
+        (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+      await fetch(`${process.env.NEON_AUTH_BASE_URL}/admin/remove-user`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Origin: origin },
+        body: JSON.stringify({ id }),
+      });
+    } catch {
+      // The email is blocked in deleted_emails even if the auth directory call fails.
+    }
+  }
   await Promise.allSettled(keys.filter(Boolean).map((key) => deleteObject(key)));
   return NextResponse.json({ ok: true });
 }
