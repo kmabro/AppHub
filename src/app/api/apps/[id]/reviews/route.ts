@@ -42,6 +42,15 @@ export async function POST(request: Request, { params }: Ctx) {
   if (!parsed.success) return NextResponse.json({ error: "Invalid review" }, { status: 400 });
 
   const { id } = await params;
+  const { rows: apps } = await query<{ owner_id: string }>(
+    "SELECT owner_id FROM apps WHERE id = $1",
+    [id]
+  );
+  if (!apps[0]) return NextResponse.json({ error: "App not found" }, { status: 404 });
+  if (apps[0].owner_id === session.id) {
+    return NextResponse.json({ error: "You cannot review your own app" }, { status: 403 });
+  }
+
   const { rows } = await query<Review>(
     `INSERT INTO reviews (app_id, user_id, rating, body)
      VALUES ($1, $2, $3, $4)

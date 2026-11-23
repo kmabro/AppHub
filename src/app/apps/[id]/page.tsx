@@ -223,6 +223,7 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
             average={average}
             count={reviewCount}
             currentUserId={session?.id}
+            isOwner={Boolean(session && session.id === app.owner_id)}
           />
 
           {app.screenshots && app.screenshots.length > 0 && (

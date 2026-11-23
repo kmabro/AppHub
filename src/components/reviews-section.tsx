@@ -13,9 +13,10 @@ type Props = {
   average: number;
   count: number;
   currentUserId?: string;
+  isOwner?: boolean;
 };
 
-export function ReviewsSection({ appId, reviews, average, count, currentUserId }: Props) {
+export function ReviewsSection({ appId, reviews, average, count, currentUserId, isOwner }: Props) {
   const router = useRouter();
   const own = reviews.find((review) => review.user_id === currentUserId);
   const [rating, setRating] = useState(own?.rating ?? 5);
@@ -72,7 +73,14 @@ export function ReviewsSection({ appId, reviews, average, count, currentUserId }
         </div>
       </div>
 
-      {currentUserId ? (
+      {isOwner ? (
+        <div className="fade-in mt-5 rounded-xl border border-indigo-100 bg-indigo-50/60 p-4 text-sm text-indigo-800">
+          <p className="font-medium">This is your app</p>
+          <p className="mt-1 text-xs text-indigo-700">
+            You can&apos;t review your own app. Other students can rate and review it here.
+          </p>
+        </div>
+      ) : currentUserId ? (
         <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
           <p className="text-sm font-medium text-slate-700">
             {own ? "Edit your review" : "Leave a review"}
