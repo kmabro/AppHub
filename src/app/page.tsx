@@ -77,12 +77,8 @@ export default async function Home({
         <div className="float-soft pointer-events-none absolute -right-20 -top-24 h-80 w-80 rounded-full bg-gradient-to-br from-indigo-200/70 to-violet-200/50 blur-3xl" />
         <div className="float-slower pointer-events-none absolute -bottom-36 left-1/4 h-72 w-72 rounded-full bg-gradient-to-br from-sky-200/60 to-indigo-200/50 blur-3xl" />
         <div className="relative max-w-2xl">
-          <span className="fade-in inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white/80 px-3.5 py-1.5 text-xs font-medium text-indigo-700 shadow-sm backdrop-blur" style={{ "--delay": "120ms" } as React.CSSProperties}>
-            <span className="breathe h-1.5 w-1.5 rounded-full bg-indigo-500" />
-            Built by students, shared with everyone
-          </span>
           <h1
-            className="rise-in mt-6 text-4xl font-semibold leading-[1.1] tracking-tight sm:text-6xl"
+            className="rise-in text-4xl font-semibold leading-[1.1] tracking-tight sm:text-6xl"
             style={{ "--delay": "180ms" } as React.CSSProperties}
           >
             Discover apps made by <span className="gradient-text">your classmates.</span>
@@ -91,8 +87,8 @@ export default async function Home({
             className="rise-in mt-5 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg"
             style={{ "--delay": "260ms" } as React.CSSProperties}
           >
-            AppHub is the simple place to publish a mobile app and share it with the whole class.
-            Upload once — everyone can find it and install it from here.
+            Discover what your classmates built. Search by app name or category, open an app, and
+            install it on your phone — or publish the one you built in a few clicks.
           </p>
           <div
             className="rise-in mt-8 flex flex-wrap gap-3"
@@ -120,7 +116,7 @@ export default async function Home({
         {[
           { icon: Layers3, label: "Apps published", value: s?.apps ?? "0" },
           { icon: Download, label: "Total downloads", value: s?.downloads ?? "0" },
-          { icon: Users, label: "Student developers", value: s?.developers ?? "0" },
+          { icon: Users, label: "Total developers", value: s?.developers ?? "0" },
         ].map(({ icon: Icon, label, value }, index) => (
           <div
             key={label}
@@ -142,12 +138,10 @@ export default async function Home({
 
       <section id="browse" className="scroll-mt-24 space-y-6">
         <div className="rise-in" style={{ "--delay": "480ms" } as React.CSSProperties}>
-          <span className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-500">
-            The catalog
-          </span>
-          <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">All apps</h2>
+          <h2 className="text-2xl font-semibold tracking-tight text-slate-900">Find an app</h2>
           <p className="mt-1 text-sm text-slate-500">
-            {apps.length} {apps.length === 1 ? "app" : "apps"} available to install
+            Explore {apps.length} {apps.length === 1 ? "app" : "apps"} shared by your class. Use the
+            filters to find one quickly.
           </p>
         </div>
 
@@ -175,8 +169,8 @@ export default async function Home({
             <h3 className="mt-5 font-semibold text-slate-900">No apps found</h3>
             <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-slate-500">
               {q || category || platform
-                ? "Try a different search or clear the filters."
-                : "Be the first to publish an app for your class."}
+                ? "Try a different search or clear the filters to see more apps."
+                : "No apps here yet. Publish yours so your classmates can find it."}
             </p>
             <Link
               href="/apps/new"

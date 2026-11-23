@@ -8,6 +8,7 @@ import { formatBytes, formatDate, initials } from "@/lib/format";
 import type { AppRecord } from "@/lib/types";
 import { PlatformBadge } from "@/components/platform-badge";
 import { InstallButton } from "@/components/install-button";
+import { DeleteButton } from "@/components/delete-button";
 
 export const dynamic = "force-dynamic";
 
@@ -64,6 +65,9 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
               <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 transition-colors duration-300 hover:bg-slate-200">
                 {app.category}
               </span>
+              <span className="rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-600">
+                v{app.version}
+              </span>
             </div>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
               {app.name}
@@ -83,16 +87,19 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
           </div>
 
           {canEdit && (
-            <Link
-              href={`/apps/${app.id}/edit`}
-              className="btn-soft group inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600"
-            >
-              <Pencil
-                size={14}
-                className="transition-transform duration-300 group-hover:rotate-12"
-              />
-              Edit
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href={`/apps/${app.id}/edit`}
+                className="btn-soft group inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600"
+              >
+                <Pencil
+                  size={14}
+                  className="transition-transform duration-300 group-hover:rotate-12"
+                />
+                Edit
+              </Link>
+              <DeleteButton id={app.id} name={app.name} redirectTo="/dashboard" />
+            </div>
           )}
         </div>
       </section>

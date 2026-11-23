@@ -16,6 +16,7 @@ type Initial = Pick<
   | "description"
   | "category"
   | "platform"
+  | "version"
   | "install_method"
   | "file_url"
   | "external_url"
@@ -50,6 +51,7 @@ export function AppForm({ initial }: { initial?: Initial }) {
   const [description, setDescription] = useState(initial?.description ?? "");
   const [category, setCategory] = useState(initial?.category ?? "Education");
   const [platform, setPlatform] = useState<Platform>(initial?.platform ?? "android");
+  const [version, setVersion] = useState(initial?.version ?? "1.0.0");
   const [installMethod, setInstallMethod] = useState<InstallMethod>(
     initial?.install_method ?? "file"
   );
@@ -122,6 +124,7 @@ export function AppForm({ initial }: { initial?: Initial }) {
         description: description.trim(),
         category,
         platform,
+        version: version.trim() || "1.0.0",
         installMethod,
         fileUrl: installMethod === "file" ? fileUrl : null,
         externalUrl: installMethod === "link" ? externalUrl.trim() : null,
@@ -217,6 +220,23 @@ export function AppForm({ initial }: { initial?: Initial }) {
               className={`${inputClass} resize-y`}
             />
           </div>
+
+          {editing && (
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-slate-700" htmlFor="version">
+                Version
+              </label>
+              <input
+                id="version"
+                value={version}
+                onChange={(event) => setVersion(event.target.value)}
+                className={inputClass}
+              />
+              <p className="mt-1.5 text-xs text-slate-400">
+                Bump this when you upload a new file.
+              </p>
+            </div>
+          )}
         </div>
       </section>
 
@@ -310,8 +330,21 @@ export function AppForm({ initial }: { initial?: Initial }) {
               <input id="icon-input" type="file" accept="image/*" className="hidden" />
             </label>
             {iconUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={iconUrl} alt="Icon preview" className="mt-2 h-14 w-14 rounded-lg object-cover" />
+              <div className="mt-2 flex items-center gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={iconUrl} alt="Icon preview" className="h-14 w-14 rounded-lg object-cover" />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIconUrl(null);
+                    const input = document.querySelector<HTMLInputElement>("#icon-input");
+                    if (input) input.value = "";
+                  }}
+                  className="inline-flex items-center gap-1 text-xs text-slate-500 transition hover:text-red-600"
+                >
+                  <X size={12} /> Remove icon
+                </button>
+              </div>
             )}
           </div>
           <div>

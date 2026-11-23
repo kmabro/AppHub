@@ -36,7 +36,9 @@ export function AppCard({ app, index = 0 }: { app: AppRecord; index?: number }) 
               className="shrink-0 text-slate-300 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-indigo-500"
             />
           </div>
-          <p className="mt-0.5 truncate text-xs text-slate-500">{app.category}</p>
+          <p className="mt-0.5 truncate text-xs text-slate-500">
+            {app.category} · v{app.version}
+          </p>
         </div>
       </div>
 

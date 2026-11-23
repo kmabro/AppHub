@@ -4,7 +4,15 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
 
-export function DeleteButton({ id, name }: { id: string; name: string }) {
+export function DeleteButton({
+  id,
+  name,
+  redirectTo,
+}: {
+  id: string;
+  name: string;
+  redirectTo?: string;
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
 
@@ -13,6 +21,8 @@ export function DeleteButton({ id, name }: { id: string; name: string }) {
     setBusy(true);
     const res = await fetch(`/api/apps/${id}`, { method: "DELETE" });
     if (res.ok) {
+      if (redirectTo) router.push(redirectTo);
+      else router.refresh();
       router.refresh();
     } else {
       window.alert("Could not delete this app. Please try again.");

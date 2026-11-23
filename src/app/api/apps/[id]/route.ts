@@ -53,38 +53,50 @@ export async function PATCH(request: Request, { params }: Ctx) {
   }
   const d = parsed.data;
 
-  await query(
-    `UPDATE apps SET
-      name = COALESCE($2, name),
-      package_name = COALESCE($3, package_name),
-      description = COALESCE($4, description),
-      category = COALESCE($5, category),
-      platform = COALESCE($6, platform),
-      version = COALESCE($7, version),
-      install_method = COALESCE($8, install_method),
-      file_url = COALESCE($9, file_url),
-      external_url = COALESCE($10, external_url),
-      file_size = COALESCE($11, file_size),
-      icon_url = COALESCE($12, icon_url),
-      screenshots = COALESCE($13::jsonb, screenshots),
-      updated_at = now()
-    WHERE id = $1`,
+  const fields: Array<[string, string, unknown]> = [
+    ["name", "name", d.name],
+    ["package_name", "packageName", d.packageName],
+    ["description", "description", d.description],
+    ["category", "category", d.category],
+    ["platform", "platform", d.platform],
+    ["version", "version", d.version],
+    ["install_method", "installMethod", d.installMethod],
+    ["file_url", "fileUrl", d.fileUrl],
+    ["external_url", "externalUrl", d.externalUrl],
+    ["file_size", "fileSize", d.fileSize],
+    ["icon_url", "iconUrl", d.iconUrl],
     [
-      id,
-      d.name ?? null,
-      d.packageName ?? null,
-      d.description ?? null,
-      d.category ?? null,
-      d.platform ?? null,
-      d.version ?? null,
-      d.installMethod ?? null,
-      d.fileUrl ?? null,
-      d.externalUrl ?? null,
-      d.fileSize ?? null,
-      d.iconUrl ?? null,
-      d.screenshots ? JSON.stringify(d.screenshots) : null,
-    ]
+      "screenshots",
+      "screenshots",
+      d.screenshots === undefined ? undefined : JSON.stringify(d.screenshots),
+    ],
+  ];
+
+  const provided = fields.filter(([, , value]) => value !== undefined);
+  const sets = provided.map(([column], index) =>
+    column === "screenshots" ? `${column} = $${index + 2}::jsonb` : `${column} = $${index + 2}`
   );
+
+  if (sets.length) {
+    await query(
+      `UPDATE apps SET ${sets.join(", ")}, updated_at = now() WHERE id = $1`,
+      [id, ...provided.map(([, , value]) => value)]
+    );
+  }
+
+  const oldKeys: string[] = [];
+  if (d.iconUrl !== undefined && d.iconUrl !== app.icon_url) {
+    oldKeys.push(keyFromUrl(app.icon_url));
+  }
+  if (d.fileUrl !== undefined && d.fileUrl !== app.file_url) {
+    oldKeys.push(keyFromUrl(app.file_url));
+  }
+  if (d.screenshots !== undefined) {
+    for (const url of app.screenshots ?? []) {
+      if (!d.screenshots.includes(url)) oldKeys.push(keyFromUrl(url));
+    }
+  }
+  await Promise.allSettled(oldKeys.filter(Boolean).map((key) => deleteObject(key)));
 
   return NextResponse.json({ ok: true });
 }
