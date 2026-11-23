@@ -2,7 +2,7 @@
 
 import Cropper, { type Area } from "react-easy-crop";
 import { useCallback, useState } from "react";
-import { Check, X, ZoomIn, ZoomOut } from "lucide-react";
+import { Check, Maximize, X, ZoomIn, ZoomOut } from "lucide-react";
 import { getCroppedFile, type CropArea } from "@/lib/crop";
 
 type Props = {
@@ -19,10 +19,34 @@ export function ImageCropper({ src, fileName, mime, aspect, onDone, onCancel }: 
   const [zoom, setZoom] = useState(1);
   const [area, setArea] = useState<CropArea | null>(null);
   const [busy, setBusy] = useState(false);
+  const [fullImage, setFullImage] = useState(false);
 
   const onCropComplete = useCallback((_croppedArea: Area, pixels: Area) => {
+    setFullImage(false);
     setArea(pixels);
   }, []);
+
+  async function selectFullImage() {
+    const image = new Image();
+    image.src = src;
+    try {
+      await image.decode();
+    } catch {
+      await new Promise<void>((resolve, reject) => {
+        image.onload = () => resolve();
+        image.onerror = () => reject(new Error("Could not read image"));
+      });
+    }
+    setArea({
+      x: 0,
+      y: 0,
+      width: image.naturalWidth,
+      height: image.naturalHeight,
+    });
+    setZoom(1);
+    setCrop({ x: 0, y: 0 });
+    setFullImage(true);
+  }
 
   async function apply() {
     if (!area) return;
@@ -79,6 +103,19 @@ export function ImageCropper({ src, fileName, mime, aspect, onDone, onCancel }: 
           />
           <ZoomIn size={16} className="shrink-0 text-slate-400" />
         </div>
+
+        <button
+          type="button"
+          onClick={selectFullImage}
+          className={`btn-soft mt-4 inline-flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium ${
+            fullImage
+              ? "border-indigo-300 bg-indigo-50 text-indigo-700"
+              : "border-slate-200 text-slate-600"
+          }`}
+        >
+          <Maximize size={15} />
+          {fullImage ? "Full image selected" : "Use full image (no cropping)"}
+        </button>
 
         <div className="mt-5 flex justify-end gap-2">
           <button
