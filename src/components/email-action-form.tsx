@@ -2,27 +2,20 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowLeft, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
 
 type Props = {
   title: string;
   description: string;
   submitLabel: string;
   successMessage: string;
-  endpoint: string;
+  mode: "forgot" | "resend";
 };
 
-export function EmailActionForm({
-  title,
-  description,
-  submitLabel,
-  successMessage,
-  endpoint,
-}: Props) {
+export function EmailActionForm({ title, description, submitLabel, successMessage, mode }: Props) {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
-  const [fallbackLink, setFallbackLink] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function submit(event: React.FormEvent) {
@@ -30,17 +23,19 @@ export function EmailActionForm({
     setBusy(true);
     setError("");
     try {
-      const res = await fetch(endpoint, {
+      const path =
+        mode === "forgot" ? "request-password-reset" : "email-otp/send-verification-otp";
+      const body =
+        mode === "forgot"
+          ? { email, redirectTo: `${window.location.origin}/reset-password` }
+          : { email, type: "email-verification" };
+      const response = await fetch(`/api/auth/${path}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ ...body, callbackURL: window.location.origin }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Something went wrong");
-      if (data.resetToken) setFallbackLink(`/reset-password?token=${encodeURIComponent(data.resetToken)}`);
-      if (data.verificationToken) {
-        setFallbackLink(`/verify-email?token=${encodeURIComponent(data.verificationToken)}`);
-      }
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "Could not send email");
       setSent(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not send email");
@@ -69,22 +64,8 @@ export function EmailActionForm({
               <Check size={16} /> {successMessage}
             </p>
             <p className="mt-2 text-xs leading-relaxed text-emerald-700">
-              Check your inbox and spam folder. If you don&apos;t see it, check the address and try
-              again.
+              Check your inbox and spam folder.
             </p>
-            {fallbackLink && (
-              <div className="mt-3 border-t border-emerald-200 pt-3">
-                <p className="text-xs font-medium text-emerald-800">
-                  Email delivery isn&apos;t configured for this address — continue here instead:
-                </p>
-                <Link
-                  href={fallbackLink}
-                  className="btn-primary mt-2 inline-flex rounded-lg px-3 py-2 text-xs font-semibold text-white"
-                >
-                  Continue →
-                </Link>
-              </div>
-            )}
           </div>
         ) : (
           <form onSubmit={submit} className="mt-6 space-y-4">
@@ -112,8 +93,7 @@ export function EmailActionForm({
               disabled={busy}
               className="btn-primary flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white"
             >
-              {busy && <Loader2 size={16} className="spin-slow" />}
-              {submitLabel}
+              {busy ? "Sending…" : submitLabel}
             </button>
           </form>
         )}

@@ -58,7 +58,7 @@ The admin panel is completely separate from student accounts. Admins can view al
 | Styling | Tailwind CSS 4, custom design tokens and motion utilities |
 | Database | Neon Postgres (`pg`) |
 | Files | Neon Object Storage (S3-compatible) with AWS SDK presigned URLs |
-| Auth | Custom sessions (`jose`, `bcryptjs`); `react-easy-crop` for cropping |
+| Auth | **Neon Auth (Managed Better Auth)** for students; separate admin session (`jose`, `bcryptjs`); `react-easy-crop` for cropping |
 | Email | Resend REST API |
 | Hosting | Vercel (recommended) |
 
@@ -123,8 +123,9 @@ node scripts/e2e-test.mjs     # smoke test against the running server
 | `SESSION_SECRET` | Long random string for signing session cookies |
 | `AWS_REGION`, `AWS_ENDPOINT_URL_S3` | Neon Object Storage endpoint settings |
 | `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_BUCKET` | Storage credentials and bucket |
-| `RESEND_API_KEY` | Resend API key for verification/reset emails |
-| `EMAIL_FROM` | Verified sender, e.g. `AppHub <no-reply@yourdomain.com>` |
+| `NEON_AUTH_BASE_URL` | Neon Auth base URL from Console → Better Auth |
+| `NEON_AUTH_COOKIE_SECRET` | Random secret (base64, 32+ bytes) for auth session cookies |
+| `RESEND_API_KEY`, `EMAIL_FROM` | Optional legacy email settings (Neon Auth now handles student email) |
 | `NEXT_PUBLIC_SITE_URL` | Public URL used in QR codes, emails, robots, and sitemap |
 
 Set the bucket to `public_read` and allow `GET`, `HEAD`, `PUT` with any headers:
@@ -133,15 +134,15 @@ Set the bucket to `public_read` and allow `GET`, `HEAD`, `PUT` with any headers:
 node --env-file=.env.local scripts/setup-storage.mjs
 ```
 
-Resend's free `onboarding@resend.dev` sender only emails the account owner. **To send real verification and password-reset emails to classmates, verify a domain in Resend and set `EMAIL_FROM` to an address on that domain.** If delivery fails, the app shows an on-screen **Verify my account** / **Continue** link immediately after registration or a reset request, so students are never blocked and no admin approval is needed. Links are also printed to the server console, and admins can verify accounts manually from `/admin`. Students can publish their first app immediately.
+Student sign-up, sign-in, **6-digit email verification codes**, and password-reset emails are handled by **Neon Auth (Managed Better Auth)**. Its shared email provider (`auth@mail.myneon.app`) delivers to any address, so **no domain purchase is needed** for classmates to receive codes and reset links. Verification codes expire after 15 minutes. The admin account uses a completely separate login at `/admin/login`, so admin approval is never needed for students to register or publish.
 
 ---
 
 ## Auth flows
 
-1. Register → verification email → click link → account verified → sign in.
-2. Forgot password → one-hour reset link → new password → all reset tokens invalidated.
-3. Resend verification available from sign-in.
+1. Student registers → Neon Auth emails a **6-digit code** → student enters it on `/verify-email` → account verified → sign in.
+2. Forgot password → Neon Auth emails a one-hour reset link → new password.
+3. A new code can be requested from sign-in. Admin login is separate and unaffected.
 
 Tokens are random 32-byte values stored only as SHA-256 hashes, expire after 24 hours (verify) / 1 hour (reset), and are single-use.
 

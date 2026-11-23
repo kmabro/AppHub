@@ -3,39 +3,33 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { Check, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Check, Eye, EyeOff } from "lucide-react";
 
 export function ResetPasswordForm() {
   const router = useRouter();
   const token = useSearchParams().get("token") ?? "";
   const [password, setPassword] = useState("");
-  const [confirm, setConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    if (password !== confirm) {
-      setError("Passwords do not match.");
-      return;
-    }
     setBusy(true);
     setError("");
     try {
-      const res = await fetch("/api/auth/reset-password", {
+      const response = await fetch("/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, password }),
+        body: JSON.stringify({ token, newPassword: password, callbackURL: window.location.origin }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Could not reset password");
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "Could not reset password");
       setDone(true);
-      window.setTimeout(() => router.push("/login?reset=1"), 1500);
+      window.setTimeout(() => router.push("/login?reset=1"), 1200);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
+      setError(err instanceof Error ? err.message : "Could not reset password");
       setBusy(false);
     }
   }
@@ -49,7 +43,7 @@ export function ResetPasswordForm() {
         </p>
         <Link
           href="/forgot-password"
-          className="btn-primary mt-6 inline-flex rounded-xl px-4 py-2.5 text-sm font-medium text-white"
+          className="btn-primary mt-6 inline-flex rounded-lg px-4 py-2.5 text-sm font-medium text-white"
         >
           Request a new link
         </Link>
@@ -102,31 +96,6 @@ export function ResetPasswordForm() {
                 </button>
               </div>
             </div>
-            <div>
-              <label htmlFor="confirm" className="mb-1.5 block text-sm font-medium text-slate-700">
-                Confirm password
-              </label>
-              <div className="relative">
-                <input
-                  id="confirm"
-                  type={showPassword ? "text" : "password"}
-                  value={confirm}
-                  onChange={(event) => setConfirm(event.target.value)}
-                  autoComplete="new-password"
-                  minLength={8}
-                  required
-                  className="field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 pr-11 text-base sm:text-sm"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((value) => !value)}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-                >
-                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
-                </button>
-              </div>
-            </div>
             {error && (
               <p role="alert" className="fade-in rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
                 {error}
@@ -137,8 +106,7 @@ export function ResetPasswordForm() {
               disabled={busy}
               className="btn-primary flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white"
             >
-              {busy && <Loader2 size={16} className="spin-slow" />}
-              Update password
+              {busy ? "Updating…" : "Update password"}
             </button>
           </form>
         )}

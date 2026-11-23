@@ -1,5 +1,7 @@
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
+import { query } from "./db";
+import { neonAuth } from "./neon-auth/server";
 
 const COOKIE_NAME = "apphub_session";
 const SEVEN_DAYS = 60 * 60 * 24 * 7;
@@ -16,6 +18,7 @@ export type SessionUser = {
   email: string;
   is_admin: boolean;
   username?: string;
+  email_verified?: boolean;
 };
 
 export async function createSession(user: SessionUser) {
@@ -41,11 +44,10 @@ export async function createSession(user: SessionUser) {
   });
 }
 
-export async function getSession(): Promise<SessionUser | null> {
+async function getCustomSession(): Promise<SessionUser | null> {
   const store = await cookies();
   const token = store.get(COOKIE_NAME)?.value;
   if (!token) return null;
-
   try {
     const { payload } = await jwtVerify(token, secret());
     if (!payload.sub) return null;
@@ -55,6 +57,35 @@ export async function getSession(): Promise<SessionUser | null> {
       email: String(payload.email ?? ""),
       is_admin: Boolean(payload.is_admin),
       username: String(payload.username ?? ""),
+    };
+  } catch {
+    return null;
+  }
+}
+
+export async function getSession(): Promise<SessionUser | null> {
+  const adminSession = await getCustomSession();
+  if (adminSession) return adminSession;
+
+  try {
+    const { data } = await neonAuth.getSession();
+    const user = data?.user;
+    if (!user) return null;
+
+    const { rows } = await query<{
+      is_admin: boolean;
+      is_blocked: boolean;
+      username: string | null;
+    }>("SELECT is_admin, is_blocked, username FROM users WHERE id = $1", [user.id]);
+    if (!rows[0] || rows[0].is_blocked) return null;
+
+    return {
+      id: user.id,
+      name: user.name ?? "",
+      email: user.email ?? "",
+      is_admin: Boolean(rows[0].is_admin),
+      username: rows[0].username ?? "",
+      email_verified: Boolean(user.emailVerified),
     };
   } catch {
     return null;

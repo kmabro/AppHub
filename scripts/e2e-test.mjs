@@ -54,8 +54,12 @@ const uploadBlocked = await fetch(base + "/api/upload-url", {
 });
 check("unauthenticated upload blocked", uploadBlocked.status === 401, `status ${uploadBlocked.status}`);
 
-const badVerify = await fetch(base + "/api/auth/verify?token=invalid", { redirect: "manual" });
-check("invalid verification link handled", badVerify.status < 500, `status ${badVerify.status}`);
+const badAuth = await fetch(base + "/api/auth/sign-in/email", {
+  method: "POST",
+  headers: { "Content-Type": "application/json", Origin: base },
+  body: JSON.stringify({ email: "nobody@example.com", password: "wrongpass", callbackURL: base }),
+});
+check("invalid sign-in rejected", badAuth.status === 401, `status ${badAuth.status}`);
 
 console.log(ok ? "\nALL CHECKS PASSED" : "\nSOME CHECKS FAILED");
 process.exit(ok ? 0 : 1);

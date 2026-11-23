@@ -13,7 +13,7 @@ export default async function ResendVerificationPage() {
       description="Enter the email you registered with and we'll send a fresh verification link."
       submitLabel="Send verification email"
       successMessage="Verification email sent"
-      endpoint="/api/auth/resend-verification"
+      mode="resend"
     />
   );
 }

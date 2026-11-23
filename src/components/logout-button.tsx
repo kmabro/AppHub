@@ -10,7 +10,8 @@ export function LogoutButton() {
 
   async function logout() {
     setBusy(true);
-    await fetch("/api/auth/logout", { method: "POST" });
+    await fetch("/api/auth/sign-out", { method: "POST" }).catch(() => {});
+    await fetch("/api/auth/admin-logout", { method: "POST" }).catch(() => {});
     router.push("/");
     router.refresh();
   }

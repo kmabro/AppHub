@@ -15,6 +15,7 @@ export default async function AdminLoginPage() {
       title="Administrator sign in"
       description="Use the admin account to manage students, apps, releases, and reports."
       redirectTo="/admin"
+      admin
     />
   );
 }

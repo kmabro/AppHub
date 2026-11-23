@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ArrowRight, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { createStudentProfile } from "@/app/actions/auth";
 
 type Props = {
   mode: "login" | "register";
@@ -11,54 +12,68 @@ type Props = {
   title?: string;
   description?: string;
   redirectTo?: string;
+  admin?: boolean;
 };
 
 const notices: Record<string, string> = {
-  registered: "Account created. Check your email for a verification link.",
-  "email-failed":
-    "Account created, but the verification email could not be sent. Ask the administrator to verify your account.",
+  registered: "Account created. Enter the verification code we emailed you.",
   verified: "Email verified. You can sign in now.",
   reset: "Password updated. Sign in with your new password.",
-  "verify-invalid": "That verification link is invalid or has expired. Request a new one.",
 };
 
-export function AuthForm({ mode, notice, title, description, redirectTo }: Props) {
+async function post(path: string, body: Record<string, unknown>) {
+  const response = await fetch(`/api/auth/${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ...body, callbackURL: window.location.origin }),
+  });
+  const data = await response.json().catch(() => ({}));
+  return { ok: response.ok, data };
+}
+
+export function AuthForm({ mode, notice, title, description, redirectTo, admin }: Props) {
   const router = useRouter();
   const isRegister = mode === "register";
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setBusy(true);
     setError("");
     try {
-      const res = await fetch(`/api/auth/${mode}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(isRegister ? { name, email, password } : { email, password }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(data.error || `Request failed (${res.status}). Please try again.`);
+      if (isRegister) {
+        const result = await post("sign-up/email", { name, email, password });
+        if (!result.ok) throw new Error(result.data?.message || "Could not create account");
+        const user = result.data?.user;
+        if (user?.id) await createStudentProfile(user.id, name, email);
+        router.push(`/verify-email?email=${encodeURIComponent(email)}`);
         return;
       }
-      if (isRegister) {
-        router.push(
-          data.verificationToken
-            ? `/verify-email?token=${encodeURIComponent(data.verificationToken)}`
-            : "/login?registered=1"
-        );
-      } else {
-        router.push(redirectTo || "/dashboard");
+
+      if (admin) {
+        const response = await fetch("/api/auth/admin-login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ identifier: email, password }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || "Incorrect administrator credentials");
+        router.push(redirectTo || "/admin");
+        router.refresh();
+        return;
       }
+
+      const result = await post("sign-in/email", { email, password });
+      if (!result.ok) throw new Error(result.data?.message || "Incorrect email or password");
+      router.push(redirectTo || "/dashboard");
       router.refresh();
-    } catch {
-      setError("Could not connect. Check your connection and try again.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setBusy(false);
     }
@@ -115,26 +130,11 @@ export function AuthForm({ mode, notice, title, description, redirectTo }: Props
             </div>
           )}
           <div>
-            <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-slate-700">
-              {isRegister ? "Email address" : "Email or username"}
-            </label>
-            <input
-              id="email"
-              type="text"
-              inputMode="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              autoComplete="username"
-              required
-              className="field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-base sm:text-sm"
-            />
-          </div>
-          <div>
             <div className="mb-1.5 flex items-center justify-between gap-3">
-              <label htmlFor="password" className="text-sm font-medium text-slate-700">
-                Password
+              <label htmlFor="email" className="text-sm font-medium text-slate-700">
+                {isRegister ? "Email address" : admin ? "Admin username" : "Email address"}
               </label>
-              {!isRegister && (
+              {!isRegister && !admin && (
                 <Link
                   href="/forgot-password"
                   className="text-xs font-medium text-indigo-600 transition hover:text-indigo-700"
@@ -143,6 +143,21 @@ export function AuthForm({ mode, notice, title, description, redirectTo }: Props
                 </Link>
               )}
             </div>
+            <input
+              id="email"
+              type="text"
+              inputMode="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              autoComplete={admin ? "username" : "email"}
+              required
+              className="field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-base sm:text-sm"
+            />
+          </div>
+          <div>
+            <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-slate-700">
+              Password
+            </label>
             <div className="relative">
               <input
                 id="password"
@@ -166,10 +181,7 @@ export function AuthForm({ mode, notice, title, description, redirectTo }: Props
           </div>
 
           {error && (
-            <p
-              role="alert"
-              className="fade-in rounded-xl border border-red-100 bg-red-50 px-3.5 py-2.5 text-sm text-red-700"
-            >
+            <p role="alert" className="fade-in rounded-xl bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
               {error}
             </p>
           )}
@@ -177,26 +189,12 @@ export function AuthForm({ mode, notice, title, description, redirectTo }: Props
           <button
             type="submit"
             disabled={busy}
-            className="btn-primary group flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white"
+            className="btn-primary flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold text-white"
           >
-            {busy ? (
-              <>
-                <Loader2 size={16} className="spin-slow" /> Please wait…
-              </>
-            ) : (
-              <>
-                {isRegister ? "Create account" : "Sign in"}
-                <ArrowRight size={16} className="arrow-slide" />
-              </>
-            )}
+            {busy ? "Please wait…" : isRegister ? "Create account" : "Sign in"}
+            {!busy && <ArrowRight size={16} className="arrow-slide" />}
           </button>
         </form>
-
-        <div className="mt-6 flex items-center gap-3">
-          <span className="h-px flex-1 bg-slate-100" />
-          <span className="text-xs text-slate-400">or</span>
-          <span className="h-px flex-1 bg-slate-100" />
-        </div>
 
         <p className="mt-5 text-center text-sm text-slate-500">
           {isRegister ? "Already have an account? " : "New to AppHub? "}
@@ -208,26 +206,23 @@ export function AuthForm({ mode, notice, title, description, redirectTo }: Props
             <ArrowRight size={13} className="arrow-slide" />
           </Link>
         </p>
-        {!isRegister && (
+        {!isRegister && !admin && (
           <p className="mt-3 text-center text-xs text-slate-400">
-            Didn&apos;t get the verification email?{" "}
+            Didn&apos;t get the verification code?{" "}
             <Link
               href="/resend-verification"
               className="font-medium text-indigo-600 transition hover:text-indigo-700"
             >
-              Resend it
+              Send it again
             </Link>
           </p>
         )}
+        {admin && (
+          <p className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-400">
+            <ShieldCheck size={14} /> Restricted administrator access
+          </p>
+        )}
       </div>
-
-      <p
-        className="fade-in mt-5 flex items-center justify-center gap-2 text-xs text-slate-400"
-        style={{ "--delay": "200ms" } as React.CSSProperties}
-      >
-        <ShieldCheck size={14} />
-        Your password is stored securely. Only you can manage your apps.
-      </p>
     </div>
   );
 }

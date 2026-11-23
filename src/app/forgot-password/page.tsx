@@ -13,7 +13,7 @@ export default async function ForgotPasswordPage() {
       description="Enter your email and we'll send you a link to choose a new password."
       submitLabel="Send reset link"
       successMessage="Reset link sent"
-      endpoint="/api/auth/forgot-password"
+      mode="forgot"
     />
   );
 }
