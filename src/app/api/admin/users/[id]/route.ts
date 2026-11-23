@@ -21,6 +21,15 @@ export async function PATCH(request: Request, { params }: Ctx) {
   const { id } = await params;
   const { action } = parsed.data;
 
+  const { rows: targets } = await query<{ is_admin: boolean }>(
+    "SELECT is_admin FROM users WHERE id = $1",
+    [id]
+  );
+  if (!targets[0]) return NextResponse.json({ error: "User not found" }, { status: 404 });
+  if (targets[0].is_admin && (action === "block" || action === "delete")) {
+    return NextResponse.json({ error: "Admin accounts cannot be blocked or deleted" }, { status: 403 });
+  }
+
   if (action === "delete" && id === admin.id) {
     return NextResponse.json({ error: "You cannot delete your own admin account" }, { status: 400 });
   }

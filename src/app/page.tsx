@@ -71,7 +71,7 @@ export default async function Home({
     `SELECT
       (SELECT count(*) FROM apps) AS apps,
       (SELECT COALESCE(sum(downloads), 0) FROM apps) AS downloads,
-      (SELECT count(*) FROM users) AS developers`
+      (SELECT count(*) FROM users WHERE is_admin = false) AS developers`
   );
   const s = stats.rows[0];
 

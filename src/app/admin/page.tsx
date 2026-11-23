@@ -22,7 +22,7 @@ export default async function AdminPage() {
     open_reports: string;
   }>(
     `SELECT
-      (SELECT count(*) FROM users) AS users,
+      (SELECT count(*) FROM users WHERE is_admin = false) AS users,
       (SELECT count(*) FROM apps) AS apps,
       (SELECT count(*) FROM reviews) AS reviews,
       (SELECT count(*) FROM reports WHERE status = 'open') AS open_reports`
@@ -277,19 +277,23 @@ export default async function AdminPage() {
                     label="Verify"
                   />
                 )}
-                <AdminActionButton
-                  endpoint={`/api/admin/users/${user.id}`}
-                  action={user.is_blocked ? "unblock" : "block"}
-                  label={user.is_blocked ? "Unblock" : "Block"}
-                  confirmText={user.is_blocked ? undefined : `Block ${user.name}?`}
-                />
-                <AdminActionButton
-                  endpoint={`/api/admin/users/${user.id}`}
-                  action="delete"
-                  label="Delete"
-                  danger
-                  confirmText={`Delete ${user.name}, their apps, and all their files?`}
-                />
+                {!user.is_admin && (
+                  <>
+                    <AdminActionButton
+                      endpoint={`/api/admin/users/${user.id}`}
+                      action={user.is_blocked ? "unblock" : "block"}
+                      label={user.is_blocked ? "Unblock" : "Block"}
+                      confirmText={user.is_blocked ? undefined : `Block ${user.name}?`}
+                    />
+                    <AdminActionButton
+                      endpoint={`/api/admin/users/${user.id}`}
+                      action="delete"
+                      label="Delete"
+                      danger
+                      confirmText={`Delete ${user.name}, their apps, and all their files?`}
+                    />
+                  </>
+                )}
               </div>
             </div>
           ))}
