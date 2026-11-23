@@ -1,7 +1,6 @@
 import { cookies } from "next/headers";
 import { SignJWT, jwtVerify } from "jose";
 import { query } from "./db";
-import { neonAuth } from "./neon-auth/server";
 
 const COOKIE_NAME = "apphub_session";
 const SEVEN_DAYS = 60 * 60 * 24 * 7;
@@ -67,10 +66,24 @@ export async function getSession(): Promise<SessionUser | null> {
   const adminSession = await getCustomSession();
   if (adminSession) return adminSession;
 
+  const store = await cookies();
+  const dataCookie =
+    store.get("__Secure-neon-auth.local.session_data")?.value ??
+    store.get("neon-auth.local.session_data")?.value;
+  if (!dataCookie) return null;
+
   try {
-    const { data } = await neonAuth.getSession();
-    const user = data?.user;
-    if (!user) return null;
+    const secretValue = process.env.NEON_AUTH_COOKIE_SECRET;
+    if (!secretValue) return null;
+    const { payload } = await jwtVerify(dataCookie, new TextEncoder().encode(secretValue), {
+      algorithms: ["HS256"],
+    });
+    const user = payload.user as
+      | { id?: string; name?: string; email?: string; emailVerified?: boolean }
+      | undefined;
+    const session = payload.session as { expiresAt?: string } | undefined;
+    if (!user?.id) return null;
+    if (session?.expiresAt && Date.parse(session.expiresAt) < Date.now()) return null;
 
     const { rows } = await query<{
       is_admin: boolean;

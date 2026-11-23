@@ -1,21 +1,14 @@
-import { Pool, type QueryResultRow } from "pg";
+import { neon } from "@neondatabase/serverless";
 
-const globalForDb = globalThis as unknown as { apphubPool?: Pool };
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) throw new Error("DATABASE_URL is not configured");
 
-export const pool =
-  globalForDb.apphubPool ??
-  new Pool({
-    connectionString: process.env.DATABASE_URL,
-    max: process.env.VERCEL ? 1 : 5,
-    idleTimeoutMillis: 30_000,
-    connectionTimeoutMillis: 10_000,
-  });
+const sql = neon(connectionString);
 
-if (process.env.NODE_ENV !== "production") globalForDb.apphubPool = pool;
-
-export async function query<T extends QueryResultRow = QueryResultRow>(
+export async function query<T = Record<string, unknown>>(
   text: string,
   params: unknown[] = []
-) {
-  return pool.query<T>(text, params);
+): Promise<{ rows: T[]; rowCount: number }> {
+  const rows = (await sql.query(text, params)) as T[];
+  return { rows, rowCount: rows.length };
 }

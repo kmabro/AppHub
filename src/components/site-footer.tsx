@@ -7,10 +7,6 @@ export function SiteFooter() {
         <p className="leading-relaxed">
           Find and install apps built by your classmates — and share the one you built.
         </p>
-        <p className="inline-flex w-fit items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50/70 px-3 py-1.5 text-xs font-medium text-indigo-600">
-          <span className="breathe h-1.5 w-1.5 rounded-full bg-indigo-500" />
-          Developed by <span className="font-semibold">@kmabro</span>
-        </p>
       </div>
     </footer>
   );

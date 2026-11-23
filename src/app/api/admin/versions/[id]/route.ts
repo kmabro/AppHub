@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getAdminSession } from "@/lib/auth";
-import { pool, query } from "@/lib/db";
+import { query } from "@/lib/db";
 import { deleteObject, keyFromUrl } from "@/lib/storage";
 
 export const runtime = "nodejs";
@@ -43,38 +43,23 @@ export async function POST(request: Request, { params }: Ctx) {
     return NextResponse.json({ ok: true });
   }
 
-  const client = await pool.connect();
-  try {
-    await client.query("BEGIN");
-    await client.query("UPDATE app_versions SET is_current = false WHERE app_id = $1", [
+  await query("UPDATE app_versions SET is_current = false WHERE app_id = $1", [version.app_id]);
+  await query("UPDATE app_versions SET status = 'published', is_current = true WHERE id = $1", [id]);
+  await query(
+    `UPDATE apps SET
+      version = $2, install_method = $3, platform = $4,
+      file_url = $5, external_url = $6, file_size = $7, updated_at = now()
+     WHERE id = $1`,
+    [
       version.app_id,
-    ]);
-    await client.query(
-      "UPDATE app_versions SET status = 'published', is_current = true WHERE id = $1",
-      [id]
-    );
-    await client.query(
-      `UPDATE apps SET
-        version = $2, install_method = $3, platform = $4,
-        file_url = $5, external_url = $6, file_size = $7, updated_at = now()
-       WHERE id = $1`,
-      [
-        version.app_id,
-        version.version,
-        version.install_method,
-        version.platform,
-        version.file_url,
-        version.external_url,
-        version.file_size,
-      ]
-    );
-    await client.query("COMMIT");
-  } catch (error) {
-    await client.query("ROLLBACK");
-    throw error;
-  } finally {
-    client.release();
-  }
+      version.version,
+      version.install_method,
+      version.platform,
+      version.file_url,
+      version.external_url,
+      version.file_size,
+    ]
+  );
 
   return NextResponse.json({ ok: true });
 }

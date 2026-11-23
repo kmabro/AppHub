@@ -29,7 +29,6 @@ for (const path of [
 const home = await fetch(base + "/");
 const homeHtml = await home.text();
 check("brand icon present", homeHtml.includes("/apphub-icon.png"));
-check("developer credit present", homeHtml.includes("@kmabro"));
 check("no placeholder text", !homeHtml.includes("you@school.edu"));
 
 const blocked = await fetch(base + "/api/apps", {
