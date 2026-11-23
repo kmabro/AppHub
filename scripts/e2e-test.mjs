@@ -1,17 +1,4 @@
 const base = "http://localhost:3000";
-const email = `test-${Date.now()}@example.com`;
-let cookie = "";
-
-function headers(json = true) {
-  return {
-    ...(json ? { "Content-Type": "application/json" } : {}),
-    ...(cookie ? { Cookie: cookie } : {}),
-  };
-}
-
-async function get(path, opts = {}) {
-  return fetch(base + path, { ...opts, headers: { ...headers(false), ...(opts.headers || {}) } });
-}
 
 let ok = true;
 function check(label, condition, detail = "") {
@@ -19,78 +6,55 @@ function check(label, condition, detail = "") {
   if (!condition) ok = false;
 }
 
-const home = await get("/");
-check("home page loads", home.status === 200 && (await home.text()).includes("AppHub"), `status ${home.status}`);
+async function status(path) {
+  const response = await fetch(base + path);
+  return response.status;
+}
 
-const reg = await fetch(base + "/api/auth/register", {
-  method: "POST",
-  headers: headers(),
-  body: JSON.stringify({ name: "Test Student", email, password: "password123" }),
-});
-check("register", reg.status === 200, `status ${reg.status}`);
-cookie = (reg.headers.get("set-cookie") || "").split(";")[0];
-check("session cookie set", cookie.startsWith("apphub_session="));
+for (const path of [
+  "/",
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+  "/resend-verification",
+  "/robots.txt",
+  "/sitemap.xml",
+]) {
+  const code = await status(path);
+  check(`${path} loads`, code === 200, `status ${code}`);
+}
 
-const appRes = await fetch(base + "/api/apps", {
+const home = await fetch(base + "/");
+const homeHtml = await home.text();
+check("brand icon present", homeHtml.includes("/apphub-icon.png"));
+check("developer credit present", homeHtml.includes("@kmabro"));
+check("no placeholder text", !homeHtml.includes("you@school.edu"));
+
+const blocked = await fetch(base + "/api/apps", {
   method: "POST",
-  headers: headers(),
+  headers: { "Content-Type": "application/json" },
   body: JSON.stringify({
-    name: "Test Notes App",
-    packageName: "com.test.notes",
-    description: "A tiny notes app used for testing.",
-    category: "Education",
+    name: "Fake",
+    description: "",
+    category: "Other",
     platform: "android",
     version: "1.0.0",
     installMethod: "link",
-    externalUrl: "https://example.com/install",
+    externalUrl: "https://example.com",
   }),
 });
-const appData = await appRes.json();
-check("create app", appRes.status === 201, `status ${appRes.status} ${JSON.stringify(appData)}`);
-const id = appData.id;
+check("unauthenticated publish blocked", blocked.status === 401, `status ${blocked.status}`);
 
-if (id) {
-  const detail = await get(`/apps/${id}`);
-  const detailHtml = await detail.text();
-  check("app detail page", detail.status === 200 && detailHtml.includes("Test Notes App"), `status ${detail.status}`);
-
-  const dl = await get(`/api/download/${id}`, { redirect: "manual" });
-  check("download redirect", dl.status === 302 && dl.headers.get("location") === "https://example.com/install", `status ${dl.status}`);
-
-  const dash = await get("/dashboard");
-  check("dashboard shows app", dash.status === 200 && (await dash.text()).includes("Test Notes App"));
-
-  const edit = await get(`/apps/${id}/edit`);
-  check("edit page", edit.status === 200, `status ${edit.status}`);
-
-  const del = await fetch(base + `/api/apps/${id}`, { method: "DELETE", headers: headers(false) });
-  check("delete app", del.status === 200, `status ${del.status}`);
-}
-
-const uploadInfo = await fetch(base + "/api/upload-url", {
-  method: "POST",
-  headers: headers(),
-  body: JSON.stringify({ kind: "apk", fileName: "test-app.apk", size: 4 }),
-});
-const uploadData = await uploadInfo.json();
-check("presigned upload url", uploadInfo.status === 200 && Boolean(uploadData.uploadUrl), `status ${uploadInfo.status}`);
-if (uploadData.uploadUrl) {
-  const put = await fetch(uploadData.uploadUrl, {
-    method: "PUT",
-    headers: { "Content-Type": uploadData.contentType },
-    body: Buffer.from("test"),
-  });
-  check("direct storage upload", put.ok, `status ${put.status}`);
-  const fileGet = await fetch(uploadData.url);
-  check("public file read", fileGet.status === 200 && (await fileGet.text()) === "test", `status ${fileGet.status}`);
-}
-
-const forbidden = await fetch(base + "/api/apps", {
+const uploadBlocked = await fetch(base + "/api/upload-url", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ name: "Nope", packageName: "com.nope.app", platform: "android", installMethod: "link", externalUrl: "https://example.com" }),
+  body: JSON.stringify({ kind: "apk", fileName: "a.apk", size: 1 }),
 });
-check("unauthenticated publish blocked", forbidden.status === 401, `status ${forbidden.status}`);
+check("unauthenticated upload blocked", uploadBlocked.status === 401, `status ${uploadBlocked.status}`);
+
+const badVerify = await fetch(base + "/api/auth/verify?token=invalid", { redirect: "manual" });
+check("invalid verification link handled", badVerify.status < 500, `status ${badVerify.status}`);
 
 console.log(ok ? "\nALL CHECKS PASSED" : "\nSOME CHECKS FAILED");
 process.exit(ok ? 0 : 1);

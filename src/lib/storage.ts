@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 export const BUCKET = process.env.S3_BUCKET || "apphub";
@@ -25,6 +25,15 @@ export async function createUploadUrl(key: string, contentType: string) {
     ContentType: contentType,
   });
   return getSignedUrl(storage, command, { expiresIn: 900 });
+}
+
+export async function createDownloadUrl(key: string, downloadName: string) {
+  const command = new GetObjectCommand({
+    Bucket: BUCKET,
+    Key: key,
+    ResponseContentDisposition: `attachment; filename="${downloadName}"`,
+  });
+  return getSignedUrl(storage, command, { expiresIn: 300 });
 }
 
 export async function deleteObject(key: string) {

@@ -6,9 +6,10 @@ import { useState } from "react";
 import { ImagePlus, Loader2, Plus, UploadCloud, X } from "lucide-react";
 import { CATEGORIES, type AppRecord, type InstallMethod, type Platform } from "@/lib/types";
 import { UploadProgress } from "./upload-progress";
+import { ImageCropper } from "./image-cropper";
 
 const inputClass =
-  "field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm";
+  "field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-base sm:text-sm";
 
 type Initial = Pick<
   AppRecord,
@@ -89,6 +90,49 @@ export function AppForm({ initial }: { initial?: Initial }) {
   const [progress, setProgress] = useState<Record<string, number>>({});
   const [phase, setPhase] = useState("");
 
+  const [cropTarget, setCropTarget] = useState<{
+    file: File;
+    url: string;
+    kind: "icon" | "screenshot";
+  } | null>(null);
+  const [shotQueue, setShotQueue] = useState<File[]>([]);
+  const [iconFile, setIconFile] = useState<File | null>(null);
+  const [shotFiles, setShotFiles] = useState<File[]>([]);
+  const [newIconUrl, setNewIconUrl] = useState<string | null>(null);
+  const [newShotUrls, setNewShotUrls] = useState<string[]>([]);
+
+  function openCrop(file: File, kind: "icon" | "screenshot") {
+    setCropTarget({ file, url: URL.createObjectURL(file), kind });
+  }
+
+  function handleCropDone(file: File) {
+    if (!cropTarget) return;
+    if (cropTarget.kind === "icon") {
+      setIconFile(file);
+      setNewIconUrl(URL.createObjectURL(file));
+      setIconUrl(null);
+    } else {
+      setShotFiles((previous) => [...previous, file]);
+      setNewShotUrls((previous) => [...previous, URL.createObjectURL(file)]);
+    }
+    URL.revokeObjectURL(cropTarget.url);
+    setCropTarget(null);
+
+    if (cropTarget.kind === "screenshot" && shotQueue.length > 1) {
+      const [next, ...rest] = shotQueue;
+      setShotQueue(rest);
+      setCropTarget({ file: next, url: URL.createObjectURL(next), kind: "screenshot" });
+    } else {
+      setShotQueue([]);
+    }
+  }
+
+  function cancelCrop() {
+    if (cropTarget) URL.revokeObjectURL(cropTarget.url);
+    setCropTarget(null);
+    setShotQueue([]);
+  }
+
   function onAppFileChange(file: File | null) {
     setAppFile(file);
     setFileSize(file?.size ?? 0);
@@ -129,21 +173,17 @@ export function AppForm({ initial }: { initial?: Initial }) {
         setExistingFileUrl(uploaded.url);
       }
 
-      let newIconUrl = iconUrl;
-      const iconInput = document.querySelector<HTMLInputElement>("#icon-input")?.files?.[0];
-      if (iconInput) {
-        const uploaded = await uploadFile(iconInput, "icon", track("icon"));
-        newIconUrl = uploaded.url;
+      let savedIconUrl = iconUrl;
+      if (iconFile) {
+        const uploaded = await uploadFile(iconFile, "icon", track("icon"));
+        savedIconUrl = uploaded.url;
         setIconUrl(uploaded.url);
       }
 
-      const shotInput = document.querySelector<HTMLInputElement>("#shot-input")?.files;
       let finalScreenshots = screenshots;
-      if (shotInput?.length) {
+      if (shotFiles.length) {
         const uploaded = await Promise.all(
-          Array.from(shotInput).map((file, index) =>
-            uploadFile(file, "screenshot", track(`shot-${index}`))
-          )
+          shotFiles.map((file, index) => uploadFile(file, "screenshot", track(`shot-${index}`)))
         );
         finalScreenshots = [...screenshots, ...uploaded.map((item) => item.url)].slice(0, 6);
       }
@@ -160,7 +200,7 @@ export function AppForm({ initial }: { initial?: Initial }) {
         fileUrl: installMethod === "file" ? fileUrl : null,
         externalUrl: installMethod === "link" ? externalUrl.trim() : null,
         fileSize: installMethod === "file" ? fileSize : 0,
-        iconUrl: newIconUrl,
+        iconUrl: savedIconUrl,
         screenshots: finalScreenshots,
       };
 
@@ -188,10 +228,12 @@ export function AppForm({ initial }: { initial?: Initial }) {
   const overallProgress = progressValues.length
     ? Math.round(progressValues.reduce((sum, value) => sum + value, 0) / progressValues.length)
     : 100;
+  const shownIcon = newIconUrl ?? iconUrl;
+  const allShots = [...screenshots, ...newShotUrls];
 
   return (
     <form onSubmit={submit} className="space-y-5">
-      <section className="rise-in rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
+      <section className="rise-in rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6">
         <h2 className="text-lg font-semibold tracking-tight text-slate-900">App details</h2>
 
         <div className="mt-5 space-y-4">
@@ -279,7 +321,7 @@ export function AppForm({ initial }: { initial?: Initial }) {
       </section>
 
       <section
-        className="rise-in rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm"
+        className="rise-in rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6"
         style={{ "--delay": "80ms" } as React.CSSProperties}
       >
         <h2 className="text-lg font-semibold tracking-tight text-slate-900">Install file</h2>
@@ -344,7 +386,7 @@ export function AppForm({ initial }: { initial?: Initial }) {
       </section>
 
       <section
-        className="rise-in rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm"
+        className="rise-in rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6"
         style={{ "--delay": "160ms" } as React.CSSProperties}
       >
         <div className="flex items-center justify-between">
@@ -365,18 +407,28 @@ export function AppForm({ initial }: { initial?: Initial }) {
             >
               <ImagePlus size={18} className="text-slate-400" />
               Choose an image
-              <input id="icon-input" type="file" accept="image/*" className="hidden" />
+              <input
+                id="icon-input"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) openCrop(file, "icon");
+                  event.target.value = "";
+                }}
+              />
             </label>
-            {iconUrl && (
+            {shownIcon && (
               <div className="mt-2 flex items-center gap-3">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={iconUrl} alt="Icon preview" className="h-14 w-14 rounded-lg object-cover" />
+                <img src={shownIcon} alt="Icon preview" className="h-14 w-14 rounded-lg object-cover" />
                 <button
                   type="button"
                   onClick={() => {
                     setIconUrl(null);
-                    const input = document.querySelector<HTMLInputElement>("#icon-input");
-                    if (input) input.value = "";
+                    setIconFile(null);
+                    setNewIconUrl(null);
                   }}
                   className="inline-flex items-center gap-1 text-xs text-slate-500 transition hover:text-red-600"
                 >
@@ -395,20 +447,43 @@ export function AppForm({ initial }: { initial?: Initial }) {
             >
               <Plus size={18} className="text-slate-400" />
               Add screenshots
-              <input id="shot-input" type="file" accept="image/*" multiple className="hidden" />
+              <input
+                id="shot-input"
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(event) => {
+                  const files = Array.from(event.target.files ?? []);
+                  if (files.length) {
+                    const [first, ...rest] = files;
+                    setShotQueue(rest);
+                    openCrop(first, "screenshot");
+                  }
+                  event.target.value = "";
+                }}
+              />
             </label>
           </div>
         </div>
 
-        {screenshots.length > 0 && (
+        {allShots.length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">
-            {screenshots.map((url, index) => (
+            {allShots.map((url, index) => (
               <div key={url + index} className="relative">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={url} alt="" className="h-16 w-16 rounded-lg object-cover" />
                 <button
                   type="button"
-                  onClick={() => setScreenshots(screenshots.filter((_, i) => i !== index))}
+                  onClick={() => {
+                    if (index < screenshots.length) {
+                      setScreenshots(screenshots.filter((_, i) => i !== index));
+                    } else {
+                      const position = index - screenshots.length;
+                      setShotFiles((previous) => previous.filter((_, i) => i !== position));
+                      setNewShotUrls((previous) => previous.filter((_, i) => i !== position));
+                    }
+                  }}
                   className="absolute -right-1.5 -top-1.5 rounded-full bg-slate-900 p-1 text-white"
                   aria-label="Remove screenshot"
                 >
@@ -453,6 +528,17 @@ export function AppForm({ initial }: { initial?: Initial }) {
           Cancel
         </Link>
       </div>
+
+      {cropTarget && (
+        <ImageCropper
+          src={cropTarget.url}
+          fileName={cropTarget.file.name}
+          mime={cropTarget.file.type || "image/jpeg"}
+          aspect={cropTarget.kind === "icon" ? 1 : undefined}
+          onDone={handleCropDone}
+          onCancel={cancelCrop}
+        />
+      )}
     </form>
   );
 }

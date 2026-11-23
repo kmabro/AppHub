@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { query } from "@/lib/db";
-import { createSession } from "@/lib/auth";
+import { createAuthToken } from "@/lib/auth-tokens";
+import { sendVerificationEmail } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -40,6 +41,8 @@ export async function POST(request: Request) {
     [name, email, passwordHash]
   );
 
-  await createSession(rows[0]);
-  return NextResponse.json({ ok: true });
+  const token = await createAuthToken(rows[0].id, "verify");
+  await sendVerificationEmail(email, token);
+
+  return NextResponse.json({ ok: true, needsVerification: true });
 }

@@ -60,7 +60,7 @@ export function InstallButton({ id, platform, installMethod, fileName }: Props) 
       <div className="flex flex-wrap items-center gap-3">
         <a
           href={href}
-          className="btn-primary group inline-flex items-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold text-white"
+          className="btn-primary group inline-flex w-full items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-sm font-semibold text-white sm:w-auto sm:px-6"
         >
           {installMethod === "link" ? (
             <ExternalLink size={17} className="arrow-slide" />
@@ -75,7 +75,7 @@ export function InstallButton({ id, platform, installMethod, fileName }: Props) 
         <button
           type="button"
           onClick={() => setShowQr((value) => !value)}
-          className="btn-soft group inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-medium text-slate-700"
+          className="btn-soft group inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-medium text-slate-700 sm:w-auto"
         >
           <QrCode
             size={17}
@@ -115,9 +115,6 @@ export function InstallButton({ id, platform, installMethod, fileName }: Props) 
               <ExternalLink size={13} /> Open link
             </a>
           </div>
-          <p className="mt-3 max-w-56 truncate rounded-lg bg-slate-50 px-2 py-1 text-[10px] text-slate-400">
-            {href}
-          </p>
         </div>
       )}
 

@@ -3,11 +3,18 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { ArrowRight, LayoutGrid, Loader2, ShieldCheck } from "lucide-react";
+import { ArrowRight, Loader2, ShieldCheck } from "lucide-react";
 
-type Props = { mode: "login" | "register" };
+type Props = { mode: "login" | "register"; notice?: string };
 
-export function AuthForm({ mode }: Props) {
+const notices: Record<string, string> = {
+  registered: "Account created. Check your email for a verification link.",
+  verified: "Email verified. You can sign in now.",
+  reset: "Password updated. Sign in with your new password.",
+  "verify-invalid": "That verification link is invalid or has expired. Request a new one.",
+};
+
+export function AuthForm({ mode, notice }: Props) {
   const router = useRouter();
   const isRegister = mode === "register";
   const [name, setName] = useState("");
@@ -31,7 +38,11 @@ export function AuthForm({ mode }: Props) {
         setError(data.error || "Something went wrong");
         return;
       }
-      router.push("/dashboard");
+      if (isRegister) {
+        router.push("/login?registered=1");
+      } else {
+        router.push("/dashboard");
+      }
       router.refresh();
     } catch {
       setError("Could not reach the server. Try again.");
@@ -43,9 +54,12 @@ export function AuthForm({ mode }: Props) {
   return (
     <div className="mx-auto max-w-md py-4 sm:py-8">
       <div className="rise-in mb-6 flex justify-center">
-        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/30">
-          <LayoutGrid size={22} />
-        </span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/apphub-icon.png"
+          alt="AppHub"
+          className="h-12 w-12 rounded-2xl object-cover shadow-lg shadow-indigo-500/30"
+        />
       </div>
 
       <div
@@ -61,6 +75,15 @@ export function AuthForm({ mode }: Props) {
             : "Sign in to manage the apps you have published."}
         </p>
 
+        {notice && notices[notice] && (
+          <p
+            role="status"
+            className="fade-in mt-4 rounded-xl border border-indigo-100 bg-indigo-50 px-3.5 py-2.5 text-sm text-indigo-700"
+          >
+            {notices[notice]}
+          </p>
+        )}
+
         <form onSubmit={submit} className="mt-7 space-y-4">
           {isRegister && (
             <div>
@@ -73,7 +96,7 @@ export function AuthForm({ mode }: Props) {
                 onChange={(event) => setName(event.target.value)}
                 autoComplete="name"
                 required
-                className="field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm"
+                className="field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-base sm:text-sm"
               />
             </div>
           )}
@@ -88,13 +111,23 @@ export function AuthForm({ mode }: Props) {
               onChange={(event) => setEmail(event.target.value)}
               autoComplete="email"
               required
-              className="field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm"
+              className="field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-base sm:text-sm"
             />
           </div>
           <div>
-            <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-slate-700">
-              Password
-            </label>
+            <div className="mb-1.5 flex items-center justify-between gap-3">
+              <label htmlFor="password" className="text-sm font-medium text-slate-700">
+                Password
+              </label>
+              {!isRegister && (
+                <Link
+                  href="/forgot-password"
+                  className="text-xs font-medium text-indigo-600 transition hover:text-indigo-700"
+                >
+                  Forgot password?
+                </Link>
+              )}
+            </div>
             <input
               id="password"
               type="password"
@@ -103,7 +136,7 @@ export function AuthForm({ mode }: Props) {
               autoComplete={isRegister ? "new-password" : "current-password"}
               minLength={isRegister ? 8 : 1}
               required
-              className="field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm"
+              className="field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-base sm:text-sm"
             />
           </div>
 
@@ -150,6 +183,17 @@ export function AuthForm({ mode }: Props) {
             <ArrowRight size={13} className="arrow-slide" />
           </Link>
         </p>
+        {!isRegister && (
+          <p className="mt-3 text-center text-xs text-slate-400">
+            Didn&apos;t get the verification email?{" "}
+            <Link
+              href="/resend-verification"
+              className="font-medium text-indigo-600 transition hover:text-indigo-700"
+            >
+              Resend it
+            </Link>
+          </p>
+        )}
       </div>
 
       <p

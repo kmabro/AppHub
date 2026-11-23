@@ -72,13 +72,13 @@ export default async function Home({
 
   return (
     <div className="space-y-10">
-      <section className="rise-in relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white/85 px-6 py-14 shadow-[0_20px_60px_-40px_rgba(79,70,229,0.35)] backdrop-blur sm:px-12 sm:py-20">
+      <section className="rise-in relative overflow-hidden rounded-3xl border border-slate-200/80 bg-white/85 px-5 py-10 shadow-[0_20px_60px_-40px_rgba(79,70,229,0.35)] backdrop-blur sm:px-12 sm:py-20">
         <div className="pointer-events-none absolute inset-0 opacity-[0.45] [background-image:radial-gradient(#c7d2fe_1px,transparent_1px)] [background-size:22px_22px] [mask-image:linear-gradient(to_bottom,black,transparent_75%)]" />
         <div className="float-soft pointer-events-none absolute -right-20 -top-24 h-80 w-80 rounded-full bg-gradient-to-br from-indigo-200/70 to-violet-200/50 blur-3xl" />
         <div className="float-slower pointer-events-none absolute -bottom-36 left-1/4 h-72 w-72 rounded-full bg-gradient-to-br from-sky-200/60 to-indigo-200/50 blur-3xl" />
         <div className="relative max-w-2xl">
           <h1
-            className="rise-in text-4xl font-semibold leading-[1.1] tracking-tight sm:text-6xl"
+            className="rise-in text-3xl font-semibold leading-[1.1] tracking-tight sm:text-5xl lg:text-6xl"
             style={{ "--delay": "180ms" } as React.CSSProperties}
           >
             Discover apps made by <span className="gradient-text">your classmates.</span>

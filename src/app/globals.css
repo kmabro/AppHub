@@ -256,6 +256,19 @@ button {
   transform: translateX(4px);
 }
 
+@media (hover: none), (pointer: coarse) {
+  .card-lift:hover,
+  .btn-primary:hover:not(:disabled),
+  .btn-soft:hover:not(:disabled),
+  .card-lift:hover .icon-bubble {
+    transform: none !important;
+  }
+
+  .nav-link:hover::after {
+    transform: scaleX(0) !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

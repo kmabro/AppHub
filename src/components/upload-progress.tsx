@@ -5,7 +5,7 @@ const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 export function UploadProgress({ progress, label }: { progress: number; label: string }) {
   return (
-    <div className="fade-in flex items-center gap-4 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4">
+    <div className="fade-in flex flex-col items-start gap-4 rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4 sm:flex-row sm:items-center">
       <div className="relative h-20 w-20 shrink-0">
         <svg viewBox="0 0 80 80" className="h-20 w-20 -rotate-90">
           <circle cx="40" cy="40" r={RADIUS} fill="none" stroke="#e0e7ff" strokeWidth="6" />

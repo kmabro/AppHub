@@ -25,11 +25,18 @@ export async function POST(request: Request) {
     email: string;
     password_hash: string;
     is_admin: boolean;
+    email_verified: boolean;
   }>("SELECT * FROM users WHERE email = $1", [email]);
 
   const user = rows[0];
   if (!user || !(await bcrypt.compare(password, user.password_hash))) {
     return NextResponse.json({ error: "Incorrect email or password" }, { status: 401 });
+  }
+  if (!user.email_verified) {
+    return NextResponse.json(
+      { error: "Please verify your email before signing in. Check your inbox." },
+      { status: 403 }
+    );
   }
 
   await createSession(user);

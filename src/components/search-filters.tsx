@@ -39,11 +39,11 @@ export function SearchFilters() {
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             aria-label="Search apps"
-            className="field w-full rounded-xl border border-slate-200 bg-slate-50/70 py-2.5 pl-10 pr-3 text-sm"
+            className="field w-full rounded-xl border border-slate-200 bg-slate-50/70 py-2.5 pl-10 pr-3 text-base sm:text-sm"
           />
         </div>
-        <div className="flex gap-2">
-          <div className="relative min-w-0 flex-1 sm:flex-none">
+        <div className="grid grid-cols-2 gap-2 sm:flex">
+          <div className="relative col-span-2 min-w-0 sm:flex-none">
             <SlidersHorizontal
               size={14}
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
@@ -51,7 +51,7 @@ export function SearchFilters() {
             <select
               value={category}
               onChange={(event) => update("category", event.target.value)}
-              className="field w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-8 pr-7 text-sm text-slate-700 sm:w-auto"
+              className="field w-full appearance-none rounded-xl border border-slate-200 bg-white py-2.5 pl-8 pr-7 text-base text-slate-700 sm:text-sm sm:w-auto"
             >
               <option value="">All categories</option>
               {CATEGORIES.map((item) => (
@@ -64,7 +64,7 @@ export function SearchFilters() {
           <select
             value={platform}
             onChange={(event) => update("platform", event.target.value)}
-            className="field rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700"
+            className="field w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-base text-slate-700 sm:text-sm sm:w-auto"
           >
             <option value="">All platforms</option>
             <option value="android">Android</option>
@@ -73,7 +73,7 @@ export function SearchFilters() {
           <select
             value={sort}
             onChange={(event) => update("sort", event.target.value)}
-            className="field rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-700"
+            className="field w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-base text-slate-700 sm:text-sm sm:w-auto"
           >
             <option value="newest">Newest</option>
             <option value="popular">Most downloaded</option>
@@ -81,7 +81,7 @@ export function SearchFilters() {
           </select>
           <button
             type="submit"
-            className="btn-primary rounded-xl px-4 py-2.5 text-sm font-medium text-white"
+            className="btn-primary col-span-2 w-full rounded-xl px-4 py-2.5 text-sm font-medium text-white sm:col-span-1 sm:w-auto"
           >
             Search
           </button>
