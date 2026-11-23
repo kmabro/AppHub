@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ImagePlus, Loader2, Plus, UploadCloud, X } from "lucide-react";
 import { CATEGORIES, type AppRecord, type InstallMethod, type Platform } from "@/lib/types";
+import { UploadProgress } from "./upload-progress";
 
 const inputClass =
   "field w-full rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm";
@@ -24,23 +25,43 @@ type Initial = Pick<
   | "screenshots"
 >;
 
-async function uploadFile(file: File, kind: "apk" | "ipa" | "icon" | "screenshot") {
-  const res = await fetch("/api/upload-url", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ kind, fileName: file.name, size: file.size, contentType: file.type }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Could not prepare upload");
+function uploadFile(
+  file: File,
+  kind: "apk" | "ipa" | "icon" | "screenshot",
+  onProgress: (percent: number) => void
+): Promise<{ url: string; size: number }> {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const res = await fetch("/api/upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind, fileName: file.name, size: file.size, contentType: file.type }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not prepare upload");
 
-  const put = await fetch(data.uploadUrl, {
-    method: "PUT",
-    headers: { "Content-Type": data.contentType },
-    body: file,
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", data.uploadUrl);
+      xhr.setRequestHeader("Content-Type", data.contentType);
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          onProgress(Math.round((event.loaded / event.total) * 100));
+        }
+      };
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          onProgress(100);
+          resolve({ url: data.url as string, size: file.size });
+        } else {
+          reject(new Error(`Upload failed (${xhr.status})`));
+        }
+      };
+      xhr.onerror = () => reject(new Error("Upload failed. Check your connection and try again."));
+      xhr.send(file);
+    } catch (error) {
+      reject(error);
+    }
   });
-  if (!put.ok) throw new Error(`Upload failed (${put.status})`);
-
-  return { url: data.url as string, size: file.size };
 }
 
 export function AppForm({ initial }: { initial?: Initial }) {
@@ -65,6 +86,8 @@ export function AppForm({ initial }: { initial?: Initial }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
+  const [progress, setProgress] = useState<Record<string, number>>({});
+  const [phase, setPhase] = useState("");
 
   function onAppFileChange(file: File | null) {
     setAppFile(file);
@@ -89,13 +112,18 @@ export function AppForm({ initial }: { initial?: Initial }) {
     }
 
     setBusy(true);
+    setError("");
+    setProgress({});
+    setPhase("Uploading files…");
     try {
-      setStatus("Uploading files…");
       const kind = platform === "android" ? "apk" : "ipa";
       let fileUrl = existingFileUrl;
 
+      const track = (key: string) => (percent: number) =>
+        setProgress((previous) => ({ ...previous, [key]: percent }));
+
       if (appFile) {
-        const uploaded = await uploadFile(appFile, kind);
+        const uploaded = await uploadFile(appFile, kind, track("app"));
         fileUrl = uploaded.url;
         setFileSize(uploaded.size);
         setExistingFileUrl(uploaded.url);
@@ -104,7 +132,7 @@ export function AppForm({ initial }: { initial?: Initial }) {
       let newIconUrl = iconUrl;
       const iconInput = document.querySelector<HTMLInputElement>("#icon-input")?.files?.[0];
       if (iconInput) {
-        const uploaded = await uploadFile(iconInput, "icon");
+        const uploaded = await uploadFile(iconInput, "icon", track("icon"));
         newIconUrl = uploaded.url;
         setIconUrl(uploaded.url);
       }
@@ -113,11 +141,14 @@ export function AppForm({ initial }: { initial?: Initial }) {
       let finalScreenshots = screenshots;
       if (shotInput?.length) {
         const uploaded = await Promise.all(
-          Array.from(shotInput).map((file) => uploadFile(file, "screenshot"))
+          Array.from(shotInput).map((file, index) =>
+            uploadFile(file, "screenshot", track(`shot-${index}`))
+          )
         );
         finalScreenshots = [...screenshots, ...uploaded.map((item) => item.url)].slice(0, 6);
       }
 
+      setPhase("Saving app…");
       setStatus("Saving app…");
       const payload = {
         name: name.trim(),
@@ -146,10 +177,17 @@ export function AppForm({ initial }: { initial?: Initial }) {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
       setStatus("");
+      setPhase("");
     } finally {
       setBusy(false);
+      setPhase("");
     }
   }
+
+  const progressValues = Object.values(progress);
+  const overallProgress = progressValues.length
+    ? Math.round(progressValues.reduce((sum, value) => sum + value, 0) / progressValues.length)
+    : 100;
 
   return (
     <form onSubmit={submit} className="space-y-5">
@@ -381,6 +419,8 @@ export function AppForm({ initial }: { initial?: Initial }) {
           </div>
         )}
       </section>
+
+      {phase && <UploadProgress progress={overallProgress} label={phase} />}
 
       {error && (
         <p

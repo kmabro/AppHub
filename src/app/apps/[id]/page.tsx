@@ -65,9 +65,6 @@ export default async function AppDetailPage({ params }: { params: Promise<{ id: 
               <span className="rounded-md bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600 transition-colors duration-300 hover:bg-slate-200">
                 {app.category}
               </span>
-              <span className="rounded-md bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-600">
-                v{app.version}
-              </span>
             </div>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
               {app.name}

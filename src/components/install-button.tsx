@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { Download, ExternalLink, Info, QrCode } from "lucide-react";
+import { Check, Copy, Download, ExternalLink, Info, QrCode } from "lucide-react";
 import type { InstallMethod, Platform } from "@/lib/types";
 
 type Props = {
@@ -12,9 +12,16 @@ type Props = {
   fileName?: string | null;
 };
 
+function installUrlFor(href: string) {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+  return `${configured || origin}${href}`;
+}
+
 export function InstallButton({ id, platform, installMethod, fileName }: Props) {
   const [qr, setQr] = useState("");
   const [showQr, setShowQr] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   const href = `/api/download/${id}`;
   const label =
@@ -28,14 +35,25 @@ export function InstallButton({ id, platform, installMethod, fileName }: Props) 
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    QRCode.toDataURL(`${window.location.origin}${href}`, {
-      width: 220,
-      margin: 1,
-      color: { dark: "#312e81", light: "#ffffff" },
+    QRCode.toDataURL(installUrlFor(href), {
+      width: 280,
+      margin: 2,
+      errorCorrectionLevel: "H",
+      color: { dark: "#1e1b4b", light: "#ffffff" },
     })
       .then(setQr)
       .catch(() => {});
   }, [href]);
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(installUrlFor(href));
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      setCopied(false);
+    }
+  }
 
   return (
     <div>
@@ -47,7 +65,10 @@ export function InstallButton({ id, platform, installMethod, fileName }: Props) 
           {installMethod === "link" ? (
             <ExternalLink size={17} className="arrow-slide" />
           ) : (
-            <Download size={17} className="transition-transform duration-300 group-hover:translate-y-0.5" />
+            <Download
+              size={17}
+              className="transition-transform duration-300 group-hover:translate-y-0.5"
+            />
           )}
           {label}
         </a>
@@ -65,11 +86,37 @@ export function InstallButton({ id, platform, installMethod, fileName }: Props) 
       </div>
 
       {showQr && (
-        <div className="rise-in mt-4 w-fit rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-lg shadow-indigo-500/10">
+        <div className="rise-in mt-4 w-fit max-w-full rounded-2xl border border-slate-200 bg-white p-5 text-center shadow-lg shadow-indigo-500/10">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={qr} alt="QR code to install this app" className="h-44 w-44 rounded-lg" />
-          <p className="mt-3 max-w-44 text-xs leading-relaxed text-slate-500">
-            Scan with your phone to open the install link
+          <img
+            src={qr}
+            alt="QR code to install this app"
+            className="mx-auto h-48 w-48 rounded-lg sm:h-56 sm:w-56"
+          />
+          <p className="mt-3 text-sm font-medium text-slate-700">
+            Scan with your phone camera
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-slate-500">
+            Opens the install link on your phone, then downloads the app.
+          </p>
+          <div className="mt-3 flex items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={copyLink}
+              className="btn-soft inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-600"
+            >
+              {copied ? <Check size={13} className="text-emerald-600" /> : <Copy size={13} />}
+              {copied ? "Copied" : "Copy link"}
+            </button>
+            <a
+              href={href}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-indigo-600 transition hover:bg-indigo-50"
+            >
+              <ExternalLink size={13} /> Open link
+            </a>
+          </div>
+          <p className="mt-3 max-w-56 truncate rounded-lg bg-slate-50 px-2 py-1 text-[10px] text-slate-400">
+            {href}
           </p>
         </div>
       )}

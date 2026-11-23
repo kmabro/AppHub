@@ -41,6 +41,7 @@ See `.env.example`. You need:
 - `DATABASE_URL` — pooled Neon Postgres connection string
 - `SESSION_SECRET` — a long random string (e.g. `openssl rand -hex 32`)
 - `AWS_REGION`, `AWS_ENDPOINT_URL_S3`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `S3_BUCKET` — Neon Object Storage credentials
+- `NEXT_PUBLIC_SITE_URL` (optional) — your deployed URL, used so QR codes always point to the public site even when someone opens the catalog from a different address
 
 The bucket must allow public reads (`public_read`) so downloads work without credentials, and must allow CORS `PUT`/`GET`/`HEAD` so the browser can upload directly to it. Run:
 
